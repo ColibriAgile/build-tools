@@ -9,10 +9,12 @@ namespace BuildTools.Services;
 public sealed class FileListingService
 {
     private readonly IFileSystem _fileSystem;
+    private readonly IAnsiConsole _console;
 
-    public FileListingService(IFileSystem fileSystem)
+    public FileListingService(IFileSystem fileSystem, IAnsiConsole console)
     {
         _fileSystem = fileSystem;
+        _console = console;
     }
 
     /// <summary>
@@ -23,11 +25,11 @@ public sealed class FileListingService
     {
         var files = _fileSystem.Directory.GetFiles(directory);
 
-        AnsiConsole.MarkupLine("[blue]Arquivos encontrados:[/]");
+        _console.MarkupLine("[blue]Arquivos encontrados:[/]");
 
         foreach (var file in files)
         {
-            AnsiConsole.MarkupLine($" - {_fileSystem.Path.GetFileName(file)}");
+            _console.MarkupLineInterpolated($" - {_fileSystem.Path.GetFileName(file)}");
         }
 
         return files;
