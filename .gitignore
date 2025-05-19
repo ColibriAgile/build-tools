@@ -1,0 +1,30 @@
+# Build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+
+# Dotnet tools
+*.nupkg
+*.snupkg
+
+# Logs
+*.log
+
+# Others
+EmpacotarNet9/
