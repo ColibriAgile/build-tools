@@ -1,5 +1,6 @@
 using System.CommandLine;
 using BuildTools.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 
 namespace BuildTools.Commands;
@@ -18,14 +19,20 @@ public sealed class EmpacotarCommand : Command
     /// <param name="empacotadorService">Serviço para empacotamento de arquivos.</param>
     /// <param name="console">Console para saída de informações.</param>
     public EmpacotarCommand
-    (
+    (        
+        [FromKeyedServices("silencioso")]
+        Option<bool> silenciosoOption,
+        [FromKeyedServices("semCor")]
+        Option<bool> semCorOption,
+        [FromKeyedServices("resumo")]
+        Option<bool> resumoOption,
         IEmpacotadorService empacotadorService,
         IAnsiConsole console
     ) : base("empacotar", "Empacota arquivos de uma pasta conforme manifesto.")
     {
         var pastaOption = new Option<string>
         (
-            aliases: ["--pasta", "-p", "/pasta"],
+            aliases: ["--pasta", "-p"],
             description: "Pasta de origem dos arquivos"
         )
         {
@@ -34,7 +41,7 @@ public sealed class EmpacotarCommand : Command
 
         var saidaOption = new Option<string>
         (
-            aliases: ["--saida", "-s", "/saida"],
+            aliases: ["--saida", "-s"],
             description: "Pasta de saída"
         )
         {
@@ -43,7 +50,7 @@ public sealed class EmpacotarCommand : Command
 
         var senhaOption = new Option<string>
         (
-            aliases: ["--senha", "-se", "/senha"],
+            aliases: ["--senha", "-se"],
             description: "Senha do pacote zip (opcional)"
         )
         {
@@ -52,7 +59,7 @@ public sealed class EmpacotarCommand : Command
 
         var versaoOption = new Option<string>
         (
-            aliases: ["--versao", "-v", "/versao"],
+            aliases: ["--versao", "-v"],
             description: "Versão do pacote (opcional, sobrescreve a do manifesto)"
         )
         {
@@ -61,7 +68,7 @@ public sealed class EmpacotarCommand : Command
 
         var developOption = new Option<bool>
         (
-            aliases: ["--develop", "-d", "/develop"],
+            aliases: ["--develop", "-d"],
             description: "Marca o pacote como versão de desenvolvimento (opcional)"
         );
 
@@ -81,7 +88,10 @@ public sealed class EmpacotarCommand : Command
             saidaOption,
             senhaOption,
             versaoOption,
-            developOption
+            developOption,
+            silenciosoOption,
+            semCorOption,
+            resumoOption
         );
     }
 
@@ -93,17 +103,62 @@ public sealed class EmpacotarCommand : Command
     /// <param name="senha">Senha do pacote zip (opcional).</param>
     /// <param name="versao">Versão do pacote (opcional).</param>
     /// <param name="develop">Indica se o pacote é de desenvolvimento.</param>
-    private void Handle(string pasta, string saida, string senha, string versao, bool develop)
+    /// <param name="silencioso">Indica se a saída deve ser silenciosa.</param>
+    /// <param name="semCor">Indica se a saída deve ser sem cor.</param>
+    /// <param name="resumo">Indica se deve exibir um resumo ao final.</param>
+    private void Handle
+    (
+        string pasta,
+        string saida,
+        string senha,
+        string versao,
+        bool develop,
+        bool silencioso,
+        bool semCor,
+        bool resumo
+    )
     {
+        if (semCor)
+        {
+            AnsiConsole.Profile.Capabilities.Ansi = false;
+        }
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var sucesso = true;
+
         try
         {
-            var caminhoPacote = _empacotadorService.Empacotar(pasta, saida, senha, versao, develop);
+            if (!silencioso)
+            {
+                _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
+            }
 
-            _console.MarkupLine($"[green]Empacotamento concluído! Pacote gerado em:[/] [blue]{caminhoPacote}[/]");
+            string caminhoPacote = _empacotadorService.Empacotar(pasta, saida, senha, versao, develop);
+            sw.Stop();
+
+            if (!silencioso)
+            {
+                _console.MarkupLine($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{caminhoPacote}[/]");
+            }
+
+            if (resumo)
+            {
+                _console.WriteLine("\n---");
+                _console.WriteLine("## Resumo do empacotamento\n");
+                _console.WriteLine($"- Pacote gerado: `{caminhoPacote}`");
+                _console.WriteLine("\n---");
+            }
         }
         catch (Exception ex)
         {
-            _console.MarkupLineInterpolated($"[red]Erro:[/] {ex.Message}");
+            sucesso = false;
+            _console.MarkupLine($"[red][[ERROR]] {ex.Message}[/]");
+            Environment.Exit(1);
+        }
+
+        if (!sucesso)
+        {
+            Environment.Exit(1);
         }
     }   
 }

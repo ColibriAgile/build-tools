@@ -3,6 +3,7 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using Spectre.Console;
 using BuildTools.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BuildTools.Commands;
 
@@ -23,13 +24,20 @@ public sealed partial class EmpacotarScriptsCommand : Command
     /// <param name="empacotadorScriptsService">Serviço para empacotamento de scripts.</param>
     public EmpacotarScriptsCommand
     (
+        [FromKeyedServices("silencioso")]
+        Option<bool> silenciosoOption,
+        [FromKeyedServices("semCor")]
+        Option<bool> semCorOption,
+        [FromKeyedServices("resumo")]
+        Option<bool> resumoOption,
         IFileSystem fileSystem,
         IAnsiConsole console,
         EmpacotadorScriptsService empacotadorScriptsService
     ) : base("empacotar_scripts", "Empacota scripts de banco de dados para sistemas Colibri.")
     {
-        var pastaOption = new Option<string>(
-            aliases: ["--pasta", "-p", "/pasta"],
+        var pastaOption = new Option<string>
+        (
+            aliases: ["--pasta", "-p"],
             description: "Pasta de origem dos scripts"
         )
         {
@@ -37,7 +45,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
         };
 
         var saidaOption = new Option<string>(
-            aliases: ["--saida", "-s", "/saida"],
+            aliases: ["--saida", "-s"],
             description: "Pasta de saída"
         )
         {
@@ -46,35 +54,14 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         var padronizarNomesOption = new Option<bool>
         (
-            aliases: ["--padronizar_nomes", "-pn", "/padronizar_nomes"],
+            aliases: ["--padronizar_nomes", "-pn"],
             () => true,
             description: "Padroniza o nome dos arquivos zip gerados conforme regex. (padrão: true)"
-        );
-
-        var silenciosoOption = new Option<bool>
-        (
-            aliases: ["--silencioso", "-q", "/silencioso"],
-            description: "Executa o comando de forma silenciosa, exibindo apenas erros."
-        );
-
-        var semCorOption = new Option<bool>
-        (
-            aliases: ["--sem-cor", "/sem-cor"],
-            description: "Desabilita cores ANSI na saída."
-        );
-
-        var resumoOption = new Option<bool>
-        (
-            aliases: ["--resumo", "/resumo"],
-            description: "Exibe um resumo em Markdown ao final."
         );
 
         AddOption(pastaOption);
         AddOption(saidaOption);
         AddOption(padronizarNomesOption);
-        AddOption(silenciosoOption);
-        AddOption(semCorOption);
-        AddOption(resumoOption);
 
         _fileSystem = fileSystem;
         _console = console;
@@ -92,13 +79,15 @@ public sealed partial class EmpacotarScriptsCommand : Command
         );
     }
 
-    private void Handle(
+    private void Handle
+    (
         string pasta,
         string saida,
         bool padronizarNomes,
         bool silencioso,
         bool semCor,
-        bool resumo)
+        bool resumo
+    )
     {
         if (semCor)
         {
@@ -109,12 +98,14 @@ public sealed partial class EmpacotarScriptsCommand : Command
         {
             _console.MarkupLine($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
             Environment.Exit(1);
+
             return;
         }
 
         if (!_fileSystem.Directory.Exists(saida))
         {
             _fileSystem.Directory.CreateDirectory(saida);
+
             if (!silencioso)
             {
                 _console.MarkupLine($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
@@ -190,6 +181,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
             {
                 _console.MarkupLineInterpolated($"[yellow][[WARN]] Nenhum arquivo de script encontrado em: {pastaOrigem}[/]");
             }
+
             return;
         }
 
