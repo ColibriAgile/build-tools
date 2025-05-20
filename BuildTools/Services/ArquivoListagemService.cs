@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
 using BuildTools.Constants;
@@ -32,53 +33,31 @@ public sealed class ArquivoListagemService : IArquivoListagemService
             .Where(static nome => nome != null)
             .ToList();
 
-        var listaAnterior = manifesto.Arquivos.ToList();
+        var patternsDeArquivos = manifesto.Arquivos.ToList();
         manifesto.Arquivos.Clear();
 
-        foreach (var arq in arquivosDiretorio)
-        {
-            if (arq!.Equals(EmpacotadorConstantes.MANIFESTO, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (arq.Equals(MANIFESTO_SERVER, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // Busca por match em pattern_nome
-            var existente = listaAnterior.FirstOrDefault
+        foreach (var arq in arquivosDiretorio
+            .Where
             (
-                a =>
-                    (!string.IsNullOrEmpty(a.Nome) && string.Equals(a.Nome, arq, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(a.PatternNome) && Regex.IsMatch(arq, a.PatternNome, RegexOptions.IgnoreCase))
-            );
+                static arq => !arq!.Equals(EmpacotadorConstantes.MANIFESTO, StringComparison.OrdinalIgnoreCase)
+                    && !arq.Equals(MANIFESTO_SERVER, StringComparison.OrdinalIgnoreCase)
+            )
+        )
+        {
+            // Busca por match em pattern_nome
+            var existente = patternsDeArquivos.FirstOrDefault(a => ArquivoCorresponde(a, arq));
 
             ManifestoArquivo novoArq = existente ?? new ManifestoArquivo { Nome = arq };
 
-            novoArq.Destino ??= AcharTipo(arq);
+            novoArq.Destino ??= AcharTipo(arq!);
 
-            if (string.IsNullOrEmpty(novoArq.Destino) && arq.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(novoArq.Destino) && arq!.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 novoArq.Destino = ARQ_CLIENT;
 
             // Garante que o nome será preenchido para empacotamento
             if (string.IsNullOrEmpty(novoArq.Nome))
                 novoArq.Nome = arq;
 
-            manifesto.Arquivos.Add(novoArq);
-        }
-
-        // Adiciona arquivos definidos apenas por pattern que não tiveram match
-        foreach (var novoArq in from arqPattern in listaAnterior.Where(static a => !string.IsNullOrEmpty(a.PatternNome) && string.IsNullOrEmpty(a.Nome))
-            let matches = arquivosDiretorio
-            .Where(f => f != null && arqPattern.PatternNome != null && Regex.IsMatch(f, arqPattern.PatternNome, RegexOptions.IgnoreCase))
-            from match in matches
-            where !manifesto.Arquivos.Any(a => a.Nome == match)
-            select new ManifestoArquivo
-            {
-                Nome = match,
-                PatternNome = arqPattern.PatternNome,
-                Destino = arqPattern.Destino,
-                Extras = arqPattern.Extras
-            })
-        {
             manifesto.Arquivos.Add(novoArq);
         }
 
@@ -104,6 +83,10 @@ public sealed class ArquivoListagemService : IArquivoListagemService
 
         return arquivosParaEmpacotar;
     }
+
+    private static bool ArquivoCorresponde(ManifestoArquivo a, [NotNullWhen(true)] string? arq)
+        => (!string.IsNullOrEmpty(a.Nome) && string.Equals(a.Nome, arq, StringComparison.OrdinalIgnoreCase))
+        || (!string.IsNullOrEmpty(a.PatternNome) && Regex.IsMatch(arq!, a.PatternNome, RegexOptions.IgnoreCase));
 
     private static string? AcharTipo(string nomeArquivo)
         => _reArqScript.IsMatch(nomeArquivo)
