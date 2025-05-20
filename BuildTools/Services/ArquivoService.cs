@@ -47,7 +47,7 @@ public sealed class ArquivoService : IArquivoService
 
         if (!_fileSystem.Directory.Exists(pastaQa))
         {
-            _console.MarkupLineInterpolated($"[red]PASTA_QA nao encontrada: {pastaQa}[/]");
+            _console.MarkupLineInterpolated($"[red]PASTA_QA não encontrada: {pastaQa}[/]");
 
             return;
         }
