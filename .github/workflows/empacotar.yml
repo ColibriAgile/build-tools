@@ -1,0 +1,42 @@
+name: Use BuildTools
+
+on:
+  workflow_call:
+    inputs:
+      pasta-origem:
+        required: true
+        type: string
+      pasta-destino:
+        required: true
+        type: string
+      versao:
+        required: true
+        type: string
+      develop:
+        required: true
+        type: string
+      extras:
+        required: false
+        type: string
+
+jobs:
+  usar-buildtools:
+    runs-on: windows-latest
+    steps:
+      - name: Baixar buildTools.exe do GitHub Releases
+        uses: dawidd6/action-download-release@v3
+        with:
+          repository: usuario/build-tools
+          tag: latest-production
+          file: BuildTools.exe
+          out-file-path: buildTools.exe
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Executar buildTools.exe (empacotar)
+        run: >
+          .\buildTools.exe empacotar
+          --pasta "${{ inputs.pasta-origem }}"
+          --saida "${{ inputs.pasta-destino }}"
+          --versao "${{ inputs.versao }}"
+          --develop "${{ inputs.develop }}"
+          ${{ inputs.extras }}
