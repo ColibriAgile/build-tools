@@ -1,41 +1,25 @@
 using System.CommandLine;
-using System.IO.Abstractions;
-using System.Text.Json;
 using BuildTools.Services;
 using Spectre.Console;
 
 namespace BuildTools.Commands;
 
 /// <summary>
-/// Command to package files from a folder according to the manifest.
+/// Comando para empacotar arquivos de uma pasta conforme manifesto.
 /// </summary>
 public sealed class EmpacotarCommand : Command
 {
-    private readonly IFileSystem _fileSystem;
-    private readonly FileListingService _fileListingService;
-    private readonly ManifestoService _manifestoService;
+    private readonly IEmpacotadorService _empacotadorService;
     private readonly IAnsiConsole _console;
 
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarCommand"/>.
     /// </summary>
-    /// <param name="fileSystem">
-    /// A abstração do sistema de arquivos a ser utilizada.
-    /// </param>
-    /// <param name="fileListingService">
-    /// Serviço para listar arquivos em um diretório.
-    /// </param>
-    /// <param name="manifestoService">
-    /// Serviço para ler o manifesto de empacotamento.
-    /// </param>
-    /// <param name="console">
-    /// O console a ser usado para saída.
-    /// </param>
+    /// <param name="empacotadorService">Serviço para empacotamento de arquivos.</param>
+    /// <param name="console">Console para saída de informações.</param>
     public EmpacotarCommand
     (
-        IFileSystem fileSystem,
-        FileListingService fileListingService,
-        ManifestoService manifestoService,
+        IEmpacotadorService empacotadorService,
         IAnsiConsole console
     ) : base("empacotar", "Empacota arquivos de uma pasta conforme manifesto.")
     {
@@ -66,13 +50,28 @@ public sealed class EmpacotarCommand : Command
             IsRequired = false
         };
 
+        var versaoOption = new Option<string>
+        (
+            aliases: ["--versao", "-v", "/versao"],
+            description: "Versão do pacote (opcional, sobrescreve a do manifesto)"
+        )
+        {
+            IsRequired = false
+        };
+
+        var developOption = new Option<bool>
+        (
+            aliases: ["--develop", "-d", "/develop"],
+            description: "Marca o pacote como versão de desenvolvimento (opcional)"
+        );
+
         AddOption(pastaOption);
         AddOption(saidaOption);
         AddOption(senhaOption);
+        AddOption(versaoOption);
+        AddOption(developOption);
 
-        _fileSystem = fileSystem;
-        _fileListingService = fileListingService;
-        _manifestoService = manifestoService;
+        _empacotadorService = empacotadorService;
         _console = console;
 
         this.SetHandler
@@ -80,50 +79,31 @@ public sealed class EmpacotarCommand : Command
             Handle,
             pastaOption,
             saidaOption,
-            senhaOption
+            senhaOption,
+            versaoOption,
+            developOption
         );
     }
 
-    private void Handle(string pasta, string saida, string senha)
+    /// <summary>
+    /// Manipula a execução do comando de empacotamento.
+    /// </summary>
+    /// <param name="pasta">Pasta de origem dos arquivos.</param>
+    /// <param name="saida">Pasta de saída do pacote.</param>
+    /// <param name="senha">Senha do pacote zip (opcional).</param>
+    /// <param name="versao">Versão do pacote (opcional).</param>
+    /// <param name="develop">Indica se o pacote é de desenvolvimento.</param>
+    private void Handle(string pasta, string saida, string senha, string versao, bool develop)
     {
         try
         {
-            if (!_fileSystem.Directory.Exists(pasta))
-            {
-                _console.MarkupLine($"[red]A pasta de origem não existe:[/] {pasta}");
+            var caminhoPacote = _empacotadorService.Empacotar(pasta, saida, senha, versao, develop);
 
-                return;
-            }
-
-            if (!_fileSystem.Directory.Exists(saida))
-            {
-                _fileSystem.Directory.CreateDirectory(saida);
-                _console.MarkupLine($"[yellow]Pasta de saída criada:[/] {saida}");
-            }
-
-            var arquivos = _fileListingService.ListAndDisplayFiles(pasta);
-            var manifesto = _manifestoService.LerManifesto(pasta, out string manifestoUsado);
-
-            if (!string.IsNullOrEmpty(manifestoUsado))
-            {
-                _console.MarkupLine($"[yellow]Usando manifesto:[/] {manifestoUsado}");
-            }
-            else
-            {
-                _console.MarkupLine("[red]Nenhum manifesto encontrado. Será gerado um novo manifesto padrão.");
-            }
-
-            _console.MarkupLine("[green]Manifesto carregado:[/]");
-
-            _console.WriteLine(JsonSerializer.Serialize
-            (
-                manifesto,
-                new JsonSerializerOptions { WriteIndented = true }
-            ));
+            _console.MarkupLine($"[green]Empacotamento concluído! Pacote gerado em:[/] [blue]{caminhoPacote}[/]");
         }
         catch (Exception ex)
         {
-            _console.MarkupLine($"[red]Erro:[/] {ex.Message}");
+            _console.MarkupLineInterpolated($"[red]Erro:[/] {ex.Message}");
         }
     }   
 }

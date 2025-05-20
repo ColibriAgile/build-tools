@@ -1,27 +1,28 @@
 ﻿using System.CommandLine;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System.IO.Abstractions;
-using Spectre.Console;
 using System.Diagnostics;
+using System.IO.Abstractions;
 using BuildTools.Commands;
 using BuildTools.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Spectre.Console;
 
-var builder = Host.CreateApplicationBuilder();
-var services = builder.Services;
+var services = new ServiceCollection();
+    
 var console = AnsiConsole.Console;
 services.AddSingleton(console);
 services.AddSingleton<IFileSystem, FileSystem>();
-services.AddSingleton<FileListingService>();
-services.AddSingleton<ManifestoService>();
+services.AddSingleton<IEmpacotadorService, EmpacotadorService>();
 services.AddSingleton<EmpacotarCommand>();
 services.AddSingleton<IZipService, ZipService>();
+services.AddSingleton<IManifestoService, ManifestoService>();
+services.AddSingleton<IArquivoListagemService, ArquivoListagemService>();
+services.AddSingleton<IArquivoService, ArquivoService>();
+services.AddSingleton<IVersaoBaseService, VersaoBaseService>();
 
-using var host = builder.Build();
-await host.StartAsync().ConfigureAwait(false);
+var serviceProvider = services.BuildServiceProvider();
 
-var rootCommand = new RootCommand("EmpacotarNet9 - Empacotador de arquivos estilo Python");
-rootCommand.AddCommand(host.Services.GetRequiredService<EmpacotarCommand>());
+var rootCommand = new RootCommand("Colibri BuildTools - Empacotador de soluções");
+rootCommand.AddCommand(serviceProvider.GetRequiredService<EmpacotarCommand>());
 
 await rootCommand.InvokeAsync(args).ConfigureAwait(false);
 
