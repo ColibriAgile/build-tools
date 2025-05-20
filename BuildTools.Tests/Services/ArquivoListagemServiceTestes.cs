@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using BuildTools.Models;
 using BuildTools.Services;
 
-namespace BuildTools.Testes;
+namespace BuildTools.Testes.Services;
 
 /// <summary>
 /// Testes unitários para o serviço de listagem de arquivos (ArquivoListagemService).

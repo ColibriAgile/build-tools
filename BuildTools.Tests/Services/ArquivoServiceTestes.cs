@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using System.IO.Abstractions.TestingHelpers;
 
-namespace BuildTools.Testes;
+namespace BuildTools.Testes.Services;
 
 /// <summary>
 /// Testes unitários para o serviço de manipulação de arquivos.

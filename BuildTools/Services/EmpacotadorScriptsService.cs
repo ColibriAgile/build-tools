@@ -14,10 +14,7 @@ public sealed partial class EmpacotadorScriptsService
     /// Inicializa uma nova instância da classe <see cref="EmpacotadorScriptsService"/>.
     /// </summary>
     /// <param name="fileSystem">Abstração do sistema de arquivos.</param>
-    public EmpacotadorScriptsService
-    (
-        IFileSystem fileSystem
-    )
+    public EmpacotadorScriptsService(IFileSystem fileSystem)
         => _fileSystem = fileSystem;
 
     /// <summary>
