@@ -98,8 +98,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
         bool resumo
     )
     {
-        if (semCor)
-            AnsiConsole.Profile.Capabilities.Ansi = false;
+        ConfigurarConsoleSemCor(semCor);
 
         if (!_fileSystem.Directory.Exists(pasta))
         {
@@ -109,13 +108,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
             return;
         }
 
-        if (!_fileSystem.Directory.Exists(saida))
-        {
-            _fileSystem.Directory.CreateDirectory(saida);
-
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
-        }
+        CriarPastaSaidaSeNecessario(saida, silencioso);
 
         var arquivosGerados = new List<string>();
         var arquivosRenomeados = new List<(string Antigo, string Novo)>();
@@ -127,22 +120,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
             if (!silencioso)
                 _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
 
-            if (_empacotadorScriptsService.TemConfigJson(pasta))
-            {
-                var destinoZip = _fileSystem.Path.Combine(saida, "_scripts.zip");
-                EmpacotarScriptsDireto(pasta, destinoZip, silencioso);
-                arquivosGerados.Add(destinoZip);
-            }
-            else
-            {
-                foreach (var subpasta in _empacotadorScriptsService.ListarSubpastasValidas(pasta))
-                {
-                    var nome = _fileSystem.Path.GetFileName(subpasta);
-                    var destinoZip = _fileSystem.Path.Combine(saida, $"_scripts{nome}.zip");
-                    EmpacotarScriptsDireto(subpasta, destinoZip, silencioso);
-                    arquivosGerados.Add(destinoZip);
-                }
-            }
+            ProcessarEmpacotamento(pasta, saida, silencioso, arquivosGerados);
 
             if (padronizarNomes)
                 arquivosRenomeados = PadronizarNomesArquivos(arquivosGerados, silencioso);
@@ -164,6 +142,43 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         if (!sucesso)
             Environment.Exit(1);
+    }
+
+    private void ProcessarEmpacotamento(string pasta, string saida, bool silencioso, List<string> arquivosGerados)
+    {
+        if (_empacotadorScriptsService.TemConfigJson(pasta))
+        {
+            var destinoZip = _fileSystem.Path.Combine(saida, "_scripts.zip");
+            EmpacotarScriptsDireto(pasta, destinoZip, silencioso);
+            arquivosGerados.Add(destinoZip);
+
+            return;
+        }
+
+        foreach (var subpasta in _empacotadorScriptsService.ListarSubpastasValidas(pasta))
+        {
+            var nome = _fileSystem.Path.GetFileName(subpasta);
+            var destinoZip = _fileSystem.Path.Combine(saida, $"_scripts{nome}.zip");
+            EmpacotarScriptsDireto(subpasta, destinoZip, silencioso);
+            arquivosGerados.Add(destinoZip);
+        }
+    }
+
+    private static void ConfigurarConsoleSemCor(bool semCor)
+    {
+        if (semCor)
+            AnsiConsole.Profile.Capabilities.Ansi = false;
+    }
+
+    private void CriarPastaSaidaSeNecessario(string saida, bool silencioso)
+    {
+        if (_fileSystem.Directory.Exists(saida))
+            return;
+
+        _fileSystem.Directory.CreateDirectory(saida);
+
+        if (!silencioso)
+            _console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
     }
 
     private void EmpacotarScriptsDireto(string pastaOrigem, string destinoZip, bool silencioso)

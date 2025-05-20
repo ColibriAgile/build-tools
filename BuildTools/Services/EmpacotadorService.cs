@@ -45,7 +45,6 @@ public sealed class EmpacotadorService : IEmpacotadorService
         var caminhoSaida = _fileSystem.Path.Combine(pastaSaida, nomeCmpkg);
         _arquivoService.ExcluirComPrefixo(pastaSaida, prefixo, Constants.EmpacotadorConstantes.EXTENSAO_PACOTE);
         _zipService.CompactarZip(pasta, arquivos, caminhoSaida, senha);
-        _arquivoService.CopiarParaQa(nomeCmpkg, prefixo, caminhoSaida);
 
         return caminhoSaida;
     }
