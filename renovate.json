@@ -2,5 +2,38 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ]
+  ],
+  "dependencyDashboard": true,
+  "git-submodules": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "matchCategories": [
+        "dotnet"
+      ],
+      "enabled": true
+    },
+    {
+      "groupName": "Microsoft packages",
+      "schedule": [
+        "after 2am and before 5am every weekday"
+      ],
+      "matchPackageNames": [
+        "/^Microsoft\\./"
+      ]
+    },
+    {
+      "groupName": "System packages",
+      "schedule": [
+        "after 2am and before 5am every weekday"
+      ],
+      "matchPackageNames": [
+        "/^System\\./"
+      ]
+    }
+  ],
+  "automerge": false,
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 5
 }
