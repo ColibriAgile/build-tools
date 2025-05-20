@@ -13,6 +13,8 @@ services.AddSingleton(console);
 services.AddSingleton<IFileSystem, FileSystem>();
 services.AddSingleton<IEmpacotadorService, EmpacotadorService>();
 services.AddSingleton<EmpacotarCommand>();
+services.AddSingleton<EmpacotarScriptsCommand>();
+services.AddSingleton<EmpacotadorScriptsService>();
 services.AddSingleton<IZipService, ZipService>();
 services.AddSingleton<IManifestoService, ManifestoService>();
 services.AddSingleton<IArquivoListagemService, ArquivoListagemService>();
@@ -23,6 +25,7 @@ var serviceProvider = services.BuildServiceProvider();
 
 var rootCommand = new RootCommand("Colibri BuildTools - Empacotador de soluções");
 rootCommand.AddCommand(serviceProvider.GetRequiredService<EmpacotarCommand>());
+rootCommand.AddCommand(serviceProvider.GetRequiredService<EmpacotarScriptsCommand>());
 
 await rootCommand.InvokeAsync(args).ConfigureAwait(false);
 
