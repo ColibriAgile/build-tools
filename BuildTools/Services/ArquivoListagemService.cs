@@ -35,7 +35,7 @@ public sealed class ArquivoListagemService : IArquivoListagemService
             .Where(nome => nome != null)
             .ToList()!;
 
-        var listaZip = new List<string> { _fileSystem.Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO) };
+// Removed unused variable `listaZip`.
         var listaAnterior = manifesto.Arquivos.ToList();
         manifesto.Arquivos.Clear();
 
