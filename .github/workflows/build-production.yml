@@ -30,17 +30,20 @@ jobs:
         run: dotnet publish BuildTools/BuildTools.csproj -c Release -r win-x64 --self-contained true -o C:\BuildTools
 
       - name: List C:\BuildTools
+        if: success()
         run: dir C:\BuildTools
 
       - name: Upload buildTools.exe artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: buildTools-exe
           path: C:\BuildTools\BuildTools.exe
           if-no-files-found: error
-          retention-days: 3
+          retention-days: 2
 
       - name: Publicar no GitHub Releases
+        if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-production
