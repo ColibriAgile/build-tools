@@ -1,10 +1,10 @@
-name: Build on PR Closed to prodution
+name: Build on PR Closed to production
 
 on:
   workflow_call:
   pull_request:
     types: [closed]
-    branches: [prodution]
+    branches: [production]
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
           name: buildTools-exe
           path: C:\BuildTools\BuildTools.exe
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 3
 
       - name: Publicar no GitHub Releases
         uses: softprops/action-gh-release@v2
