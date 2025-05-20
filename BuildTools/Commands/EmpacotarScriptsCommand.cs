@@ -19,6 +19,15 @@ public sealed partial class EmpacotarScriptsCommand : Command
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarScriptsCommand"/>.
     /// </summary>
+    /// <param name="resumoOption">
+    /// Se deve imprimir o resumo em markdown ao final do processo.
+    /// </param>
+    /// <param name="silenciosoOption">
+    /// Se deve executar o comando em modo silencioso, sem mensagens de log.
+    /// </param>
+    /// <param name="semCorOption">
+    /// Se deve executar o comando sem cores.
+    /// </param>
     /// <param name="fileSystem">Abstração do sistema de arquivos.</param>
     /// <param name="console">Console para saída formatada.</param>
     /// <param name="empacotadorScriptsService">Serviço para empacotamento de scripts.</param>
@@ -55,7 +64,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
         var padronizarNomesOption = new Option<bool>
         (
             aliases: ["--padronizar_nomes", "-pn"],
-            () => true,
+            static () => true,
             description: "Padroniza o nome dos arquivos zip gerados conforme regex. (padrão: true)"
         );
 
@@ -90,9 +99,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
     )
     {
         if (semCor)
-        {
             AnsiConsole.Profile.Capabilities.Ansi = false;
-        }
 
         if (!_fileSystem.Directory.Exists(pasta))
         {
@@ -107,9 +114,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
             _fileSystem.Directory.CreateDirectory(saida);
 
             if (!silencioso)
-            {
-                _console.MarkupLine($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
-            }
+                _console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
         }
 
         var arquivosGerados = new List<string>();
@@ -120,9 +125,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
         try
         {
             if (!silencioso)
-            {
-                _console.MarkupLine($"[blue][[INFO]] Iniciando empacotamento...[/]");
-            }
+                _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
 
             if (_empacotadorScriptsService.TemConfigJson(pasta))
             {
@@ -142,33 +145,25 @@ public sealed partial class EmpacotarScriptsCommand : Command
             }
 
             if (padronizarNomes)
-            {
                 arquivosRenomeados = PadronizarNomesArquivos(arquivosGerados, silencioso);
-            }
 
             sw.Stop();
 
             if (!silencioso)
-            {
-                _console.MarkupLine($"[green][[SUCCESS]] Todos os pacotes gerados com sucesso em {sw.Elapsed.TotalSeconds:N1}s.[/]");
-            }
+                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Todos os pacotes gerados com sucesso em {sw.Elapsed.TotalSeconds:N1}s.[/]");
 
             if (resumo)
-            {
                 ExibirResumoMarkdown(arquivosGerados, arquivosRenomeados);
-            }
         }
         catch (Exception ex)
         {
             sucesso = false;
-            _console.MarkupLine($"[red][[ERROR]] {ex.Message}[/]");
+            _console.MarkupLineInterpolated($"[red][[ERROR]] {ex.Message}[/]");
             Environment.Exit(1);
         }
 
         if (!sucesso)
-        {
             Environment.Exit(1);
-        }
     }
 
     private void EmpacotarScriptsDireto(string pastaOrigem, string destinoZip, bool silencioso)
@@ -178,30 +173,21 @@ public sealed partial class EmpacotarScriptsCommand : Command
         if (arquivos.Count == 0)
         {
             if (!silencioso)
-            {
                 _console.MarkupLineInterpolated($"[yellow][[WARN]] Nenhum arquivo de script encontrado em: {pastaOrigem}[/]");
-            }
 
             return;
         }
 
         if (_fileSystem.File.Exists(destinoZip))
-        {
             _fileSystem.File.Delete(destinoZip);
-        }
 
-        using (var zip = ZipFile.Open(destinoZip, ZipArchiveMode.Create))
-        {
-            foreach (var (arquivo, relativo) in arquivos)
-            {
-                zip.CreateEntryFromFile(arquivo, relativo);
-            }
-        }
+        using var zip = ZipFile.Open(destinoZip, ZipArchiveMode.Create);
+
+        foreach (var (arquivo, relativo) in arquivos)
+            zip.CreateEntryFromFile(arquivo, relativo);
 
         if (!silencioso)
-        {
             _console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
-        }
     }
 
     private List<(string Antigo, string Novo)> PadronizarNomesArquivos(IEnumerable<string> arquivos, bool silencioso)
@@ -233,13 +219,11 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
                 Environment.Exit(1);
             }
-            
+
             renomeados.Add((arquivo, novoCaminho));
 
             if (!silencioso)
-            {
                 _console.MarkupLineInterpolated($"[blue][[INFO]] Arquivo renomeado: {nome} » {novoNome}[/]");
-            }
         }
 
         return renomeados;
@@ -250,21 +234,23 @@ public sealed partial class EmpacotarScriptsCommand : Command
         _console.WriteLine("\n---");
         _console.WriteLine("## Resumo dos pacotes gerados\n");
         _console.WriteLine("### Arquivos gerados:");
+
         foreach (var arq in arquivosGerados)
-        {
             _console.WriteLine($"- `{arq}`");
-        }
-        if (renomeados.Any())
+
+        var listaArquivosRenomeados = renomeados.ToList();
+
+        if (listaArquivosRenomeados.Count != 0)
         {
             _console.WriteLine("\n### Arquivos renomeados:");
-            foreach (var (antigo, novo) in renomeados)
-            {
+
+            foreach (var (antigo, novo) in listaArquivosRenomeados)
                 _console.WriteLine($"- `{antigo}` » `{novo}`");
-            }
         }
+
         _console.WriteLine("\n---");
     }
 
-    [System.Text.RegularExpressions.GeneratedRegex("^_scripts(\\d{0,2})(\\S+)?\\.zip$")]
+    [System.Text.RegularExpressions.GeneratedRegex(@"^_scripts(\d{0,2})(\S+)?\.zip$")]
     private static partial System.Text.RegularExpressions.Regex RegexPadronizaNomes();
 }
