@@ -1,13 +1,14 @@
 name: Build on PR Closed to prodution
 
 on:
+  workflow_call:
   pull_request:
     types: [closed]
     branches: [prodution]
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_call'
     runs-on: windows-latest
 
     steps:
@@ -38,3 +39,14 @@ jobs:
           path: C:\BuildTools\BuildTools.exe
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publicar no GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-production
+          name: BuildTools (produção)
+          body: |
+            Release automático do BuildTools gerado a partir do branch production.
+          files: C:\BuildTools\BuildTools.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
