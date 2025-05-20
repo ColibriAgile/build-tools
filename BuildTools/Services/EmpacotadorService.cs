@@ -52,7 +52,7 @@ public sealed class EmpacotadorService : IEmpacotadorService
 
         var prefixo = manifesto.Nome.Replace(" ", string.Empty) + "_";
         var nomeCmpkg = prefixo + manifesto.Versao.Replace(" ", string.Empty).Replace(".", "_") + Constants.EmpacotadorConstantes.EXTENSAO_PACOTE;
-        var caminhoSaida = Path.Combine(pastaSaida, nomeCmpkg);
+        var caminhoSaida = _fileSystem.Path.Combine(pastaSaida, nomeCmpkg);
 
         _arquivoService.ExcluirComPrefixo(pastaSaida, prefixo, Constants.EmpacotadorConstantes.EXTENSAO_PACOTE);
 
