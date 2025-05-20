@@ -1,4 +1,3 @@
-// Arquivo: d:\projetos\BuildTools\BuildTools\Services\ManifestoService.cs
 using BuildTools.Constants;
 using BuildTools.Models;
 using System.Text.Json;
@@ -17,7 +16,7 @@ public sealed class ManifestoService : IManifestoService
         WriteIndented = true,
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
-        
+
     /// <summary>
     /// Nome do arquivo de manifesto server.
     /// </summary>
@@ -31,9 +30,7 @@ public sealed class ManifestoService : IManifestoService
     private readonly IFileSystem _fileSystem;
 
     public ManifestoService(IFileSystem fileSystem)
-    {
-        _fileSystem = fileSystem;
-    }
+        => _fileSystem = fileSystem;
 
     /// <inheritdoc />
     public Manifesto LerManifesto(string pasta)
@@ -46,11 +43,12 @@ public sealed class ManifestoService : IManifestoService
 
         foreach (var caminho in caminhos)
         {
-            if (_fileSystem.File.Exists(caminho))
-            {
-                var json = _fileSystem.File.ReadAllText(caminho);
-                return JsonSerializer.Deserialize<Manifesto>(json) ?? throw new InvalidOperationException($"Manifesto inválido: {caminho}");
-            }
+            if (!_fileSystem.File.Exists(caminho))
+                continue;
+
+            var json = _fileSystem.File.ReadAllText(caminho);
+
+            return JsonSerializer.Deserialize<Manifesto>(json) ?? throw new InvalidOperationException($"Manifesto inválido: {caminho}");
         }
 
         throw new FileNotFoundException("Nenhum manifesto encontrado na pasta.", string.Join(", ", caminhos));

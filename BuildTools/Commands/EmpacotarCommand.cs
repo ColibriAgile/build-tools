@@ -16,10 +16,19 @@ public sealed class EmpacotarCommand : Command
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarCommand"/>.
     /// </summary>
+    /// <param name="resumoOption">
+    /// Se deve imprimir o resumo em markdown ao final do processo.
+    /// </param>
+    /// <param name="silenciosoOption">
+    /// Se deve executar o comando em modo silencioso, sem mensagens de log.
+    /// </param>
+    /// <param name="semCorOption">
+    /// Se deve executar o comando sem cores.
+    /// </param>
     /// <param name="empacotadorService">Serviço para empacotamento de arquivos.</param>
     /// <param name="console">Console para saída de informações.</param>
     public EmpacotarCommand
-    (        
+    (
         [FromKeyedServices("silencioso")]
         Option<bool> silenciosoOption,
         [FromKeyedServices("semCor")]
@@ -119,9 +128,7 @@ public sealed class EmpacotarCommand : Command
     )
     {
         if (semCor)
-        {
             AnsiConsole.Profile.Capabilities.Ansi = false;
-        }
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var sucesso = true;
@@ -129,17 +136,13 @@ public sealed class EmpacotarCommand : Command
         try
         {
             if (!silencioso)
-            {
                 _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
-            }
 
             string caminhoPacote = _empacotadorService.Empacotar(pasta, saida, senha, versao, develop);
             sw.Stop();
 
             if (!silencioso)
-            {
                 _console.MarkupLine($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{caminhoPacote}[/]");
-            }
 
             if (resumo)
             {
@@ -157,8 +160,6 @@ public sealed class EmpacotarCommand : Command
         }
 
         if (!sucesso)
-        {
             Environment.Exit(1);
-        }
-    }   
+    }
 }

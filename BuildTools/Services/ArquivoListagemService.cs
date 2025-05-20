@@ -1,4 +1,3 @@
-// Arquivo: d:\projetos\BuildTools\BuildTools\Services\ArquivoListagemService.cs
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
 using BuildTools.Constants;
@@ -20,22 +19,19 @@ public sealed class ArquivoListagemService : IArquivoListagemService
     private const string ARQ_SHARED = "shared";
     private const string ARQ_PACOTE = "pacote";
     private const string MANIFESTO_SERVER = "manifesto.server";
-    private static readonly Regex RE_ARQ_SCRIPT = new(@"_scripts(\d{0,2})(\S+)?\\.zip", RegexOptions.IgnoreCase);
+    private static readonly Regex _reArqScript = new(@"_scripts(\d{0,2})(\S+)?\\.zip", RegexOptions.IgnoreCase);
 
     public ArquivoListagemService(IFileSystem fileSystem)
-    {
-        _fileSystem = fileSystem;
-    }
+        => _fileSystem = fileSystem;
 
     /// <inheritdoc />
     public List<string> ObterArquivos(string pasta, Manifesto manifesto)
     {
         var arquivosDiretorio = _fileSystem.Directory.GetFiles(pasta)
             .Select(_fileSystem.Path.GetFileName)
-            .Where(nome => nome != null)
-            .ToList()!;
+            .Where(static nome => nome != null)
+            .ToList();
 
-// Removed unused variable `listaZip`.
         var listaAnterior = manifesto.Arquivos.ToList();
         manifesto.Arquivos.Clear();
 
@@ -48,15 +44,16 @@ public sealed class ArquivoListagemService : IArquivoListagemService
                 continue;
 
             // Busca por match em pattern_nome
-            var existente = listaAnterior.FirstOrDefault(a =>
-                (!string.IsNullOrEmpty(a.Nome) && string.Equals(a.Nome, arq, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(a.PatternNome) && Regex.IsMatch(arq, a.PatternNome, RegexOptions.IgnoreCase))
+            var existente = listaAnterior.FirstOrDefault
+            (
+                a =>
+                    (!string.IsNullOrEmpty(a.Nome) && string.Equals(a.Nome, arq, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(a.PatternNome) && Regex.IsMatch(arq, a.PatternNome, RegexOptions.IgnoreCase))
             );
 
             ManifestoArquivo novoArq = existente ?? new ManifestoArquivo { Nome = arq };
 
-            if (novoArq.Destino is null)
-                novoArq.Destino = AcharTipo(arq);
+            novoArq.Destino ??= AcharTipo(arq);
 
             if (string.IsNullOrEmpty(novoArq.Destino) && arq.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 novoArq.Destino = ARQ_CLIENT;
@@ -69,34 +66,25 @@ public sealed class ArquivoListagemService : IArquivoListagemService
         }
 
         // Adiciona arquivos definidos apenas por pattern que não tiveram match
-        foreach (var arqPattern in listaAnterior.Where(a => !string.IsNullOrEmpty(a.PatternNome) && string.IsNullOrEmpty(a.Nome)))
-        {
-            var matches = arquivosDiretorio
-                .Where(f => f != null && arqPattern.PatternNome != null && System.Text.RegularExpressions.Regex.IsMatch(f, arqPattern.PatternNome, System.Text.RegularExpressions.RegexOptions.IgnoreCase));
-            foreach (var match in matches)
+        foreach (var novoArq in from arqPattern in listaAnterior.Where(static a => !string.IsNullOrEmpty(a.PatternNome) && string.IsNullOrEmpty(a.Nome))
+            let matches = arquivosDiretorio
+            .Where(f => f != null && arqPattern.PatternNome != null && Regex.IsMatch(f, arqPattern.PatternNome, RegexOptions.IgnoreCase))
+            from match in matches
+            where !manifesto.Arquivos.Any(a => a.Nome == match)
+            select new ManifestoArquivo
             {
-                if (!manifesto.Arquivos.Any(a => a.Nome == match))
-                {
-                    var novoArq = new ManifestoArquivo
-                    {
-                        Nome = match,
-                        PatternNome = arqPattern.PatternNome,
-                        Destino = arqPattern.Destino,
-                        Extras = arqPattern.Extras
-                    };
-                    manifesto.Arquivos.Add(novoArq);
-                }
-            }
+                Nome = match,
+                PatternNome = arqPattern.PatternNome,
+                Destino = arqPattern.Destino,
+                Extras = arqPattern.Extras
+            })
+        {
+            manifesto.Arquivos.Add(novoArq);
         }
 
         // Remove _pattern_nome dos arquivos antes de salvar no manifesto final
-        foreach (var arquivo in manifesto.Arquivos)
-        {
-            if (!string.IsNullOrEmpty(arquivo.PatternNome))
-            {
-                arquivo.PatternNome = null;
-            }
-        }
+        foreach (var arquivo in manifesto.Arquivos.Where(static arquivo => !string.IsNullOrEmpty(arquivo.PatternNome)))
+            arquivo.PatternNome = null;
 
         manifesto.Arquivos = manifesto.Arquivos
             .OrderBy(AcharOrdem)
@@ -104,28 +92,23 @@ public sealed class ArquivoListagemService : IArquivoListagemService
 
         // Gera a lista de nomes dos arquivos a empacotar (nome, não caminho completo)
         var arquivosParaEmpacotar = manifesto.Arquivos
-            .Select(a => a.Nome)
-            .Where(nome => !string.IsNullOrEmpty(nome))
-            .Select(nome => nome!)
+            .Select(static a => a.Nome)
+            .Where(static nome => !string.IsNullOrEmpty(nome))
+            .Select(static nome => nome!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         // Sempre inclui o manifesto.dat
         if (!arquivosParaEmpacotar.Contains(EmpacotadorConstantes.MANIFESTO, StringComparer.OrdinalIgnoreCase))
-        {
             arquivosParaEmpacotar.Insert(0, EmpacotadorConstantes.MANIFESTO);
-        }
 
         return arquivosParaEmpacotar;
     }
 
     private static string? AcharTipo(string nomeArquivo)
-    {
-        if (RE_ARQ_SCRIPT.IsMatch(nomeArquivo))
-            return ARQ_SCRIPTS;
-
-        return null;
-    }
+        => _reArqScript.IsMatch(nomeArquivo)
+            ? ARQ_SCRIPTS
+            : null;
 
     private static int AcharOrdem(ManifestoArquivo arq)
     {
@@ -136,7 +119,7 @@ public sealed class ArquivoListagemService : IArquivoListagemService
             ARQ_SHARED => 1000,
             ARQ_SERVIDOR => 2000,
             ARQ_CLIENT => 3000,
-            _ => 5000
+            var _ => 5000
         };
     }
 }

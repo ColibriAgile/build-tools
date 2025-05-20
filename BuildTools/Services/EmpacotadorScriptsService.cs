@@ -1,6 +1,5 @@
 using System.IO.Abstractions;
 using System.Text.Json;
-using Spectre.Console;
 
 namespace BuildTools.Services;
 
@@ -10,42 +9,37 @@ namespace BuildTools.Services;
 public sealed partial class EmpacotadorScriptsService
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IAnsiConsole _console;
 
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotadorScriptsService"/>.
     /// </summary>
     /// <param name="fileSystem">Abstração do sistema de arquivos.</param>
-    /// <param name="console">Console para saída formatada.</param>
     public EmpacotadorScriptsService
     (
-        IFileSystem fileSystem,
-        IAnsiConsole console
+        IFileSystem fileSystem
     )
-    {
-        _fileSystem = fileSystem;
-        _console = console;
-    }
+        => _fileSystem = fileSystem;
 
     /// <summary>
     /// Verifica se existe um config.json válido na pasta.
     /// </summary>
     /// <param name="pasta">Caminho da pasta.</param>
     /// <returns>True se existir e for válido, senão false.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Ocorre se o arquivo config.json não for válido.
+    /// </exception>
     public bool TemConfigJson(string pasta)
     {
         var arq = _fileSystem.Path.Combine(pasta, "config.json");
 
         if (!_fileSystem.File.Exists(arq))
-        {
             return false;
-        }
 
         try
         {
             using var stream = _fileSystem.File.OpenRead(arq);
             using var doc = JsonDocument.Parse(stream);
-            
+
             return true;
         }
         catch (Exception ex)
@@ -70,31 +64,6 @@ public sealed partial class EmpacotadorScriptsService
     }
 
     /// <summary>
-    /// Lista arquivos de script a serem empacotados.
-    /// </summary>
-    /// <param name="pasta">Pasta de origem.</param>
-    /// <returns>Lista de arquivos .sql, .migration e config.json.</returns>
-    public IEnumerable<string> ListarArquivosParaEmpacotar(string pasta)
-    {
-        var arquivos = new List<string>();
-
-        arquivos.AddRange(_fileSystem.Directory
-            .EnumerateFiles(pasta, "*.sql", SearchOption.TopDirectoryOnly));
-
-        arquivos.AddRange(_fileSystem.Directory
-            .EnumerateFiles(pasta, "*.migration", SearchOption.TopDirectoryOnly));
-
-        var config = _fileSystem.Path.Combine(pasta, "config.json");
-
-        if (_fileSystem.File.Exists(config))
-        {
-            arquivos.Add(config);
-        }
-
-        return arquivos;
-    }
-
-    /// <summary>
     /// Lista todos os arquivos de scripts recursivamente (incluindo subpastas) para empacotar no zip.
     /// </summary>
     /// <param name="pasta">Pasta de origem.</param>
@@ -109,22 +78,15 @@ public sealed partial class EmpacotadorScriptsService
 
         // Sempre inclui o config.json da raiz
         var config = _fileSystem.Path.Combine(pasta, "config.json");
+
         if (_fileSystem.File.Exists(config))
-        {
             arquivos.Add(config);
-        }
 
         foreach (var arquivo in arquivos)
         {
-            string relativo;
-            if (_fileSystem.Path.GetFullPath(arquivo) == _fileSystem.Path.GetFullPath(config))
-            {
-                relativo = "config.json";
-            }
-            else
-            {
-                relativo = _fileSystem.Path.GetRelativePath(pasta, arquivo);
-            }
+            var relativo = _fileSystem.Path.GetFullPath(arquivo) == _fileSystem.Path.GetFullPath(config)
+                ? "config.json"
+                : _fileSystem.Path.GetRelativePath(pasta, arquivo);
 
             yield return (arquivo, relativo);
         }

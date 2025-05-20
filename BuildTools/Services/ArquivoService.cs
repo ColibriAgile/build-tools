@@ -1,5 +1,3 @@
-// Arquivo: d:\projetos\BuildTools\BuildTools\Services\ArquivoService.cs
-using System.Diagnostics;
 using System.IO.Abstractions;
 using Spectre.Console;
 using BuildTools.Constants;
@@ -14,7 +12,7 @@ public sealed class ArquivoService : IArquivoService
 {
     private readonly IFileSystem _fileSystem;
     private readonly IAnsiConsole _console;
-    private const string PASTA_QA = "d:\\Builder\\QA";
+    private const string PASTA_QA = @"d:\Builder\QA";
     private const string VAR_QA = "QA";
     private const string VAR_ALOHA = "ALOHA";
     private const string VAR_PASTA_QA = "PASTA_QA";
@@ -30,9 +28,7 @@ public sealed class ArquivoService : IArquivoService
         var arquivos = _fileSystem.Directory.GetFiles(pasta, $"{prefixo}*{EmpacotadorConstantes.EXTENSAO_PACOTE}");
 
         foreach (var arquivo in arquivos)
-        {
             _fileSystem.File.Delete(arquivo);
-        }
     }
 
     public void CopiarParaQa(string nomeArquivo, string prefixo, string origem)
@@ -43,6 +39,7 @@ public sealed class ArquivoService : IArquivoService
         if (string.Equals(Environment.GetEnvironmentVariable(VAR_ALOHA), "true", StringComparison.OrdinalIgnoreCase))
         {
             _console.MarkupLine("[yellow]Arquivo não será gerado na pasta de QA pois ALOHA=true[/]");
+
             return;
         }
 
@@ -50,13 +47,14 @@ public sealed class ArquivoService : IArquivoService
 
         if (!_fileSystem.Directory.Exists(pastaQa))
         {
-            _console.MarkupLine($"[red]PASTA_QA nao encontrada: {pastaQa}[/]");
+            _console.MarkupLineInterpolated($"[red]PASTA_QA não encontrada: {pastaQa}[/]");
+
             return;
         }
 
         ExcluirComPrefixo(pastaQa, prefixo, EmpacotadorConstantes.EXTENSAO_PACOTE);
         var destino = _fileSystem.Path.Combine(pastaQa, nomeArquivo);
         _fileSystem.File.Copy(origem, destino, overwrite: true);
-        _console.MarkupLine($"[green]Arquivo copiado para QA:[/] [blue]{destino}[/]");
+        _console.MarkupLineInterpolated($"[green]Arquivo copiado para QA:[/] [blue]{destino}[/]");
     }
 }
