@@ -1,4 +1,3 @@
-// Arquivo: d:\projetos\BuildTools\BuildTools\Services\IManifestoService.cs
 using BuildTools.Models;
 
 namespace BuildTools.Services;

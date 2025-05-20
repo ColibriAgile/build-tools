@@ -1,4 +1,3 @@
-// Arquivo: d:\projetos\BuildTools\BuildTools\Services\IArquivoListagemService.cs
 using BuildTools.Models;
 
 namespace BuildTools.Services;

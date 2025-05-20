@@ -12,9 +12,7 @@ public sealed class ZipService : IZipService
     private readonly IFileSystem _fileSystem;
 
     public ZipService(IFileSystem fileSystem)
-    {
-        _fileSystem = fileSystem;
-    }
+        => _fileSystem = fileSystem;
 
     /// <inheritdoc />
     public void CompactarZip

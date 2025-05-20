@@ -20,12 +20,6 @@ public sealed class Manifesto
     public required string Versao { get; set; }
 
     /// <summary>
-    /// Schema do pacote.
-    /// </summary>
-    [JsonPropertyName("schema")]
-    public string? Schema { get; set; }
-
-    /// <summary>
     /// Lista de arquivos do pacote.
     /// </summary>
     [JsonPropertyName("arquivos")]

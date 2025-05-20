@@ -1,5 +1,3 @@
-// Arquivo: d:\projetos\BuildTools\BuildTools\Services\IArquivoService.cs
-
 namespace BuildTools.Services;
 
 /// <summary>

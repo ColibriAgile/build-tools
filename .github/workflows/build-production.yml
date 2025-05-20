@@ -1,0 +1,55 @@
+name: Build on PR Closed to production
+
+on:
+  workflow_call:
+  pull_request:
+    types: [closed]
+    branches: [production]
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_call'
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore BuildTools/BuildTools.csproj
+
+      - name: Build
+        run: dotnet build BuildTools/BuildTools.csproj --configuration Release
+
+      - name: Publish win-x64
+        run: dotnet publish BuildTools/BuildTools.csproj -c Release -r win-x64 --self-contained true -o C:\BuildTools
+
+      - name: List C:\BuildTools
+        if: success()
+        run: dir C:\BuildTools
+
+      - name: Upload buildTools.exe artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildTools-exe
+          path: C:\BuildTools\BuildTools.exe
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: Publicar no GitHub Releases
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-production
+          name: BuildTools (produção)
+          body: |
+            Release automático do BuildTools gerado a partir do branch production.
+          files: C:\BuildTools\BuildTools.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
