@@ -142,7 +142,7 @@ public sealed class EmpacotarCommand : Command
             sw.Stop();
 
             if (!silencioso)
-                _console.MarkupLine($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{caminhoPacote}[/]");
+                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{caminhoPacote}[/]");
 
             if (resumo)
             {
@@ -155,7 +155,7 @@ public sealed class EmpacotarCommand : Command
         catch (Exception ex)
         {
             sucesso = false;
-            _console.MarkupLine($"[red][[ERROR]] {ex.Message}[/]");
+            _console.MarkupLineInterpolated($"[red][[ERROR]] {ex.Message}[/]");
             Environment.Exit(1);
         }
 
