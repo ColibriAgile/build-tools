@@ -6,9 +6,15 @@ namespace BuildTools.Services;
 /// <summary>
 /// Implementação padrão de IZipService usando System.IO.Compression.
 /// </summary>
-public sealed class ZipService(IFileSystem fileSystem) : IZipService
+/// <inheritdoc cref="IZipService"/>
+public sealed class ZipService : IZipService
 {
-    private readonly IFileSystem _fileSystem = fileSystem;
+    private readonly IFileSystem _fileSystem;
+
+    public ZipService(IFileSystem fileSystem)
+    {
+        _fileSystem = fileSystem;
+    }
 
     /// <inheritdoc />
     public void CompactarZip
@@ -35,7 +41,7 @@ public sealed class ZipService(IFileSystem fileSystem) : IZipService
             }
 
             using var stream = _fileSystem.File.OpenRead(caminhoArquivo);
-            var entry = zip.CreateEntry(nomeArquivo);
+            var entry = zip.CreateEntry(nomeArquivo); // Garante que só o nome do arquivo vai para o zip
             using var entryStream = entry.Open();
             stream.CopyTo(entryStream);
         }
