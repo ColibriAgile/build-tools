@@ -1,4 +1,5 @@
-name: Use BuildTools
+name: Empacotar arquivos
+# Empacotar arquivos com o BuildTools
 
 on:
   workflow_call:
@@ -20,7 +21,8 @@ on:
         type: string
 
 jobs:
-  usar-buildtools:
+  empacotar-arquivos:
+    if: github.event_name == 'workflow_call'
     runs-on: windows-latest
     steps:
       - name: Baixar buildTools.exe do GitHub Releases
@@ -39,4 +41,5 @@ jobs:
           --saida "${{ inputs.pasta-destino }}"
           --versao "${{ inputs.versao }}"
           --develop "${{ inputs.develop }}"
+          --resumo
           ${{ inputs.extras }}

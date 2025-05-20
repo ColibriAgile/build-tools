@@ -1,4 +1,5 @@
-name: Use BuildTools - empacotar-scripts
+name: Empacotar scripts
+# Empacotar scripts com o BuildTools
 
 on:
   workflow_call:
@@ -14,7 +15,8 @@ on:
         type: string
 
 jobs:
-  usar-buildtools:
+  empacotar-scripts:
+    if: github.event_name == 'workflow_call'
     runs-on: windows-latest
     steps:
       - name: Baixar buildTools.exe do GitHub Releases
