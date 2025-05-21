@@ -45,8 +45,8 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: ColibriAgile/BuildTools
-        directory: './BuildTools.Tests/TestResults/'
+        directory: './BuildTools.Testes/TestResults/'
         fail_ci_if_error: true
-        files: ./BuildTools.Tests/TestResults/**/coverage.cobertura.xml
+        files: ./BuildTools.Testes/TestResults/**/coverage.cobertura.xml
         flags: unittests
         verbose: true
