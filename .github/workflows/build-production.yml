@@ -1,4 +1,4 @@
-name: Build on PR Closed to production
+name: Build production
 
 on:
   pull_request:
