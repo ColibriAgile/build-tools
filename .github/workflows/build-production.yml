@@ -1,14 +1,13 @@
 name: Build on PR Closed to production
 
 on:
-  workflow_call:
   pull_request:
     types: [closed]
     branches: [production]
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_call'
+    if: github.event.pull_request.merged == true
     runs-on: windows-latest
 
     steps:
