@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{4B7734
 		.github\workflows\build.yml = .github\workflows\build.yml
 		.github\workflows\empacotar-scripts.yml = .github\workflows\empacotar-scripts.yml
 		.github\workflows\empacotar.yml = .github\workflows\empacotar.yml
+		.github\workflows\testes.yml = .github\workflows\testes.yml
 	EndProjectSection
 EndProject
 Global
