@@ -1,4 +1,4 @@
-name: Build and Version
+name: Build e Versão
 
 on:
   push:
