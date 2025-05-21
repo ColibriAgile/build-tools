@@ -24,7 +24,7 @@ jobs:
       run: dotnet restore BuildTools.Testes/BuildTools.Testes.csproj
 
     - name: Test with coverage
-      run: dotnet test BuildTools.Testes/BuildTools.Testes.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      run: dotnet test BuildTools.Testes/BuildTools.Testes.csproj --verbosity normal --collect:"XPlat Code Coverage"
 
     - name: Publish test results
       if: always()
