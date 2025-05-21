@@ -37,8 +37,8 @@ public sealed class ManifestoService : IManifestoService
     {
         var caminhos = new[]
         {
-            _fileSystem.Path.Combine(pasta, MANIFESTO_SERVER),
-            _fileSystem.Path.Combine(pasta, MANIFESTO_LOCAL)
+            Path.Combine(pasta, MANIFESTO_SERVER),
+            Path.Combine(pasta, MANIFESTO_LOCAL)
         };
 
         foreach (var caminho in caminhos)
@@ -57,7 +57,7 @@ public sealed class ManifestoService : IManifestoService
     /// <inheritdoc />
     public void SalvarManifesto(string pasta, Manifesto manifesto)
     {
-        var caminho = _fileSystem.Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
+        var caminho = Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
 
         var json = JsonSerializer.Serialize(manifesto, _jsonSerializerOptions);
         _fileSystem.Directory.CreateDirectory(pasta);

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace BuildTools.Models;
@@ -24,12 +25,6 @@ public sealed class Manifesto
     /// </summary>
     [JsonPropertyName("arquivos")]
     public List<ManifestoArquivo> Arquivos { get; set; } = [];
-
-    /// <summary>
-    /// Lista de versões de bases compatíveis.
-    /// </summary>
-    [JsonPropertyName("versoes_bases")]
-    public List<VersaoBase>? VersoesBases { get; set; }
 
     /// <summary>
     /// Outras propriedades dinâmicas do manifesto.
@@ -65,23 +60,7 @@ public sealed class ManifestoArquivo
     /// Outras propriedades dinâmicas do arquivo.
     /// </summary>
     [JsonExtensionData]
+    [ExcludeFromCodeCoverage]
     public Dictionary<string, object>? Extras { get; set; }
 }
 
-/// <summary>
-/// Representa uma versão de base compatível.
-/// </summary>
-public sealed class VersaoBase
-{
-    /// <summary>
-    /// Nome do schema.
-    /// </summary>
-    [JsonPropertyName("schema")]
-    public required string Schema { get; set; }
-
-    /// <summary>
-    /// Versão do schema.
-    /// </summary>
-    [JsonPropertyName("versao")]
-    public required string Versao { get; set; }
-}

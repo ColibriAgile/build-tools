@@ -1,11 +1,8 @@
-using System.IO.Abstractions;
-
 namespace BuildTools.Services;
 
 /// <inheritdoc cref="IEmpacotadorService"/>
 public sealed class EmpacotadorService : IEmpacotadorService
 {
-    private readonly IFileSystem _fileSystem;
     private readonly IZipService _zipService;
     private readonly IManifestoService _manifestoService;
     private readonly IArquivoListagemService _arquivoListagemService;
@@ -13,14 +10,12 @@ public sealed class EmpacotadorService : IEmpacotadorService
 
     public EmpacotadorService
     (
-        IFileSystem fileSystem,
         IZipService zipService,
         IManifestoService manifestoService,
         IArquivoListagemService arquivoListagemService,
         IArquivoService arquivoService
     )
     {
-        _fileSystem = fileSystem;
         _zipService = zipService;
         _manifestoService = manifestoService;
         _arquivoListagemService = arquivoListagemService;
@@ -42,7 +37,7 @@ public sealed class EmpacotadorService : IEmpacotadorService
         _manifestoService.SalvarManifesto(pasta, manifesto);
         var prefixo = manifesto.Nome.Replace(" ", string.Empty) + "_";
         var nomeCmpkg = prefixo + manifesto.Versao.Replace(" ", string.Empty).Replace(".", "_") + Constants.EmpacotadorConstantes.EXTENSAO_PACOTE;
-        var caminhoSaida = _fileSystem.Path.Combine(pastaSaida, nomeCmpkg);
+        var caminhoSaida = Path.Combine(pastaSaida, nomeCmpkg);
         _arquivoService.ExcluirComPrefixo(pastaSaida, prefixo, Constants.EmpacotadorConstantes.EXTENSAO_PACOTE);
         _zipService.CompactarZip(pasta, arquivos, caminhoSaida, senha);
 

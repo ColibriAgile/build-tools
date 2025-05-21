@@ -31,7 +31,7 @@ public sealed class ZipService : IZipService
 
         foreach (var nomeArquivo in arquivos)
         {
-            var caminhoArquivo = _fileSystem.Path.Combine(pastaOrigem, nomeArquivo);
+            var caminhoArquivo = Path.Combine(pastaOrigem, nomeArquivo);
 
             if (!_fileSystem.File.Exists(caminhoArquivo))
             {

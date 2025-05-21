@@ -18,7 +18,7 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
     /// <inheritdoc/>
     public bool TemConfigJson(string pasta)
     {
-        var arq = _fileSystem.Path.Combine(pasta, "config.json");
+        var arq = Path.Combine(pasta, "config.json");
 
         if (!_fileSystem.File.Exists(arq))
             return false;
@@ -57,16 +57,16 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
             .ToList();
 
         // Sempre inclui o config.json da raiz
-        var config = _fileSystem.Path.Combine(pasta, "config.json");
+        var config = Path.Combine(pasta, "config.json");
 
         if (_fileSystem.File.Exists(config))
             arquivos.Add(config);
 
         foreach (var arquivo in arquivos)
         {
-            var relativo = _fileSystem.Path.GetFullPath(arquivo) == _fileSystem.Path.GetFullPath(config)
+            var relativo = Path.GetFullPath(arquivo) == Path.GetFullPath(config)
                 ? "config.json"
-                : _fileSystem.Path.GetRelativePath(pasta, arquivo);
+                : Path.GetRelativePath(pasta, arquivo);
 
             yield return (arquivo, relativo);
         }

@@ -29,7 +29,7 @@ public sealed class ArquivoListagemService : IArquivoListagemService
     public List<string> ObterArquivos(string pasta, Manifesto manifesto)
     {
         var arquivosDiretorio = _fileSystem.Directory.GetFiles(pasta)
-            .Select(_fileSystem.Path.GetFileName)
+            .Select(Path.GetFileName)
             .Where(static nome => nome != null)
             .ToList();
 
