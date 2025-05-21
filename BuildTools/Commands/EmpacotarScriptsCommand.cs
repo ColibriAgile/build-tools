@@ -103,23 +103,24 @@ public sealed partial class EmpacotarScriptsCommand : Command
         bool resumo
     )
     {
-        ConfigurarConsoleSemCor(semCor);
-
-        if (!_fileSystem.Directory.Exists(pasta))
-        {
-            _console.MarkupLineInterpolated($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
-
-            throw new DirectoryNotFoundException($"A pasta de origem não existe: {pasta}");
-        }
-
-        CriarPastaSaidaSeNecessario(saida, silencioso);
-
-        var arquivosGerados = new List<string>();
-        var arquivosRenomeados = new List<(string Antigo, string Novo)>();
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-
         try
         {
+            ConfigurarConsoleSemCor(semCor);
+
+            if (!_fileSystem.Directory.Exists(pasta))
+            {
+                _console.MarkupLineInterpolated($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
+
+                throw new DirectoryNotFoundException($"A pasta de origem não existe: {pasta}");
+            }
+
+            CriarPastaSaidaSeNecessario(saida, silencioso);
+
+            var arquivosGerados = new List<string>();
+            var arquivosRenomeados = new List<(string Antigo, string Novo)>();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+
             if (!silencioso)
                 _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
 
@@ -148,7 +149,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
     {
         if (_empacotadorScriptsService.TemConfigJson(pasta))
         {
-            var destinoZip = _fileSystem.Path.Combine(saida, "_scripts.zip");
+            var destinoZip = Path.Combine(saida, "_scripts.zip");
             EmpacotarScriptsDireto(pasta, destinoZip, silencioso);
             arquivosGerados.Add(destinoZip);
 
@@ -157,8 +158,8 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         foreach (var subpasta in _empacotadorScriptsService.ListarSubpastasValidas(pasta))
         {
-            var nome = _fileSystem.Path.GetFileName(subpasta);
-            var destinoZip = _fileSystem.Path.Combine(saida, $"_scripts{nome}.zip");
+            var nome = Path.GetFileName(subpasta);
+            var destinoZip = Path.Combine(saida, $"_scripts{nome}.zip");
             EmpacotarScriptsDireto(subpasta, destinoZip, silencioso);
             arquivosGerados.Add(destinoZip);
         }
@@ -209,8 +210,8 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         foreach (var arquivo in arquivos)
         {
-            var nome = _fileSystem.Path.GetFileName(arquivo);
-            var pasta = _fileSystem.Path.GetDirectoryName(arquivo) ?? string.Empty;
+            var nome = Path.GetFileName(arquivo);
+            var pasta = Path.GetDirectoryName(arquivo) ?? string.Empty;
             var match = regex.Match(nome);
 
             if (!match.Success)
@@ -219,7 +220,10 @@ public sealed partial class EmpacotarScriptsCommand : Command
             var parte2 = match.Groups[2].Value;
             var parte3 = match.Groups[3].Value;
             var novoNome = $"scripts{parte2}{parte3}.zip";
-            var novoCaminho = _fileSystem.Path.Combine(pasta, novoNome);
+            var novoCaminho = Path.Combine(pasta, novoNome);
+
+            if (string.Equals(novoNome, nome, StringComparison.OrdinalIgnoreCase))
+                continue;
 
             try
             {
