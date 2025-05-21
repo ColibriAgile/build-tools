@@ -21,10 +21,10 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore BuildTools/BuildTools.Tests/BuildTools.Testes.csproj
+      run: dotnet restore BuildTools.Testes/BuildTools.Testes.csproj
 
     - name: Test with coverage
-      run: dotnet test BuildTools/BuildTools.Tests/BuildTools.Testes.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      run: dotnet test BuildTools.Testes/BuildTools.Testes.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage"
 
     - name: Publish test results
       if: always()

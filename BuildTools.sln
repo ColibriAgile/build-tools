@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{C4AD
 		clean.ps1 = clean.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildTools.Testes", "BuildTools.Tests\BuildTools.Testes.csproj", "{9D9C865A-10FD-42CE-9B5A-F7077179A620}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildTools.Testes", "BuildTools.Testes\BuildTools.Testes.csproj", "{9D9C865A-10FD-42CE-9B5A-F7077179A620}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
