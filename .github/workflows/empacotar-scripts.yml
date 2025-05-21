@@ -20,17 +20,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Baixar buildTools.exe do GitHub Releases
-        uses: dawidd6/action-download-release@v3
+        uses: robinraju/release-downloader@v1
         with:
-          repository: usuario/build-tools
-          tag: latest-production
-          file: BuildTools.exe
-          out-file-path: buildTools.exe
+          repository: ColibriAgile/BuildTools
+          latest: true
+          fileName: BuildTools.exe
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Executar buildTools.exe (empacotar-scripts)
-        run: >
-          .\buildTools.exe empacotar_scripts
-          --pasta "${{ inputs.pasta-origem }}"
-          --saida "${{ inputs.pasta-destino }}"
-          ${{ inputs.extras }}
+        shell: pwsh
+        run: |
+          try {
+            .\buildTools.exe empacotar_scripts 
+              --pasta "${{ inputs.pasta-origem }}" 
+              --saida "${{ inputs.pasta-destino }}" 
+              ${{ inputs.extras }}
+          } catch {
+            Write-Error "Erro ao executar buildTools.exe: $_"
+            exit 1
+          }
