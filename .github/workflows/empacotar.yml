@@ -35,11 +35,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Executar buildTools.exe (empacotar)
-        run: >
-          .\buildTools.exe empacotar
-          --pasta "${{ inputs.pasta-origem }}"
-          --saida "${{ inputs.pasta-destino }}"
-          --versao "${{ inputs.versao }}"
-          --develop "${{ inputs.develop }}"
-          --resumo
-          ${{ inputs.extras }}
+        run: |
+          try {
+            .\buildTools.exe empacotar `
+            --pasta "${{ inputs.pasta-origem }}" `
+            --saida "${{ inputs.pasta-destino }}" `
+            --versao "${{ inputs.versao }}" `
+            --develop "${{ inputs.develop }}" `
+            --resumo `
+            ${{ inputs.extras && '--extras ' + inputs.extras }}
+          } catch {
+            Write-Error "Failed to execute buildTools.exe. Check the inputs and try again."
+            exit 1
+          }
