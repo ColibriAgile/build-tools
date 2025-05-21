@@ -12,6 +12,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{C4AD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildTools.Testes", "BuildTools.Tests\BuildTools.Testes.csproj", "{9D9C865A-10FD-42CE-9B5A-F7077179A620}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{4B7734AF-A98A-4CC0-83F5-79D4F51E8A2F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build-production.yml = .github\workflows\build-production.yml
+		.github\workflows\build.yml = .github\workflows\build.yml
+		.github\workflows\empacotar-scripts.yml = .github\workflows\empacotar-scripts.yml
+		.github\workflows\empacotar.yml = .github\workflows\empacotar.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

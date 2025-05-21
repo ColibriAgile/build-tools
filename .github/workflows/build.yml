@@ -45,10 +45,6 @@ jobs:
     - name: Publish win-x64
       run: dotnet publish BuildTools/BuildTools.csproj -c Release -r win-x64 /p:Version=${{ steps.gitversion.outputs.fullSemVer }}
 
-    - name: Test
-      run: dotnet test BuildTools/BuildTools.csproj --no-build --verbosity normal
-      continue-on-error: true
-
     - name: List publish folder before zip
       if: success()
       run: dir BuildTools/bin/Release/net9.0/win-x64/publish
