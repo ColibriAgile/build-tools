@@ -60,6 +60,7 @@ public sealed class ManifestoService : IManifestoService
         var caminho = _fileSystem.Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
 
         var json = JsonSerializer.Serialize(manifesto, _jsonSerializerOptions);
+        _fileSystem.Directory.CreateDirectory(pasta);
         _fileSystem.File.WriteAllText(caminho, json);
     }
 }

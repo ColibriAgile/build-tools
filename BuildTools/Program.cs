@@ -14,7 +14,7 @@ services.AddSingleton<IFileSystem, FileSystem>();
 services.AddSingleton<IEmpacotadorService, EmpacotadorService>();
 services.AddSingleton<EmpacotarCommand>();
 services.AddSingleton<EmpacotarScriptsCommand>();
-services.AddSingleton<EmpacotadorScriptsService>();
+services.AddSingleton<IEmpacotadorScriptsService, EmpacotadorScriptsService>();
 services.AddSingleton<IZipService, ZipService>();
 services.AddSingleton<IManifestoService, ManifestoService>();
 services.AddSingleton<IArquivoListagemService, ArquivoListagemService>();

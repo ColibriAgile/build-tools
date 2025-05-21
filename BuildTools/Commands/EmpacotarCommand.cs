@@ -131,7 +131,6 @@ public sealed class EmpacotarCommand : Command
             AnsiConsole.Profile.Capabilities.Ansi = false;
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var sucesso = true;
 
         try
         {
@@ -144,22 +143,19 @@ public sealed class EmpacotarCommand : Command
             if (!silencioso)
                 _console.MarkupLineInterpolated($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{caminhoPacote}[/]");
 
-            if (resumo)
-            {
-                _console.WriteLine("\n---");
-                _console.WriteLine("## Resumo do empacotamento\n");
-                _console.WriteLine($"- Pacote gerado: `{caminhoPacote}`");
-                _console.WriteLine("\n---");
-            }
+            if (!resumo)
+                return;
+
+            _console.WriteLine("\n---");
+            _console.WriteLine("## Resumo do empacotamento\n");
+            _console.WriteLine($"- Pacote gerado: `{caminhoPacote}`");
+            _console.WriteLine("\n---");
         }
         catch (Exception ex)
         {
-            sucesso = false;
             _console.MarkupLineInterpolated($"[red][[ERROR]] {ex.Message}[/]");
-            Environment.Exit(1);
-        }
 
-        if (!sucesso)
-            Environment.Exit(1);
+            throw;
+        }
     }
 }

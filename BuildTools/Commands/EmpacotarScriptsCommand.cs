@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.IO.Abstractions;
-using System.IO.Compression;
 using Spectre.Console;
 using BuildTools.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +13,8 @@ public sealed partial class EmpacotarScriptsCommand : Command
 {
     private readonly IFileSystem _fileSystem;
     private readonly IAnsiConsole _console;
-    private readonly EmpacotadorScriptsService _empacotadorScriptsService;
+    private readonly IEmpacotadorScriptsService _empacotadorScriptsService;
+    private readonly IZipService _zipService;
 
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarScriptsCommand"/>.
@@ -28,8 +28,11 @@ public sealed partial class EmpacotarScriptsCommand : Command
     /// <param name="semCorOption">
     /// Se deve executar o comando sem cores.
     /// </param>
-    /// <param name="fileSystem">Abstração do sistema de arquivos.</param>
+    /// <param name="fileSystem">Serviço de manipulação do sistema de arquivos.</param>
     /// <param name="console">Console para saída formatada.</param>
+    /// <param name="zipService">
+    /// Serviço para manipulação de arquivos zip.
+    /// </param>
     /// <param name="empacotadorScriptsService">Serviço para empacotamento de scripts.</param>
     public EmpacotarScriptsCommand
     (
@@ -41,7 +44,8 @@ public sealed partial class EmpacotarScriptsCommand : Command
         Option<bool> resumoOption,
         IFileSystem fileSystem,
         IAnsiConsole console,
-        EmpacotadorScriptsService empacotadorScriptsService
+        IZipService zipService,
+        IEmpacotadorScriptsService empacotadorScriptsService
     ) : base("empacotar_scripts", "Empacota scripts de banco de dados para sistemas Colibri.")
     {
         var pastaOption = new Option<string>
@@ -74,6 +78,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         _fileSystem = fileSystem;
         _console = console;
+        _zipService = zipService;
         _empacotadorScriptsService = empacotadorScriptsService;
 
         this.SetHandler
@@ -102,10 +107,9 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         if (!_fileSystem.Directory.Exists(pasta))
         {
-            _console.MarkupLine($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
-            Environment.Exit(1);
+            _console.MarkupLineInterpolated($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
 
-            return;
+            throw new DirectoryNotFoundException($"A pasta de origem não existe: {pasta}");
         }
 
         CriarPastaSaidaSeNecessario(saida, silencioso);
@@ -113,7 +117,6 @@ public sealed partial class EmpacotarScriptsCommand : Command
         var arquivosGerados = new List<string>();
         var arquivosRenomeados = new List<(string Antigo, string Novo)>();
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var sucesso = true;
 
         try
         {
@@ -135,13 +138,10 @@ public sealed partial class EmpacotarScriptsCommand : Command
         }
         catch (Exception ex)
         {
-            sucesso = false;
             _console.MarkupLineInterpolated($"[red][[ERROR]] {ex.Message}[/]");
-            Environment.Exit(1);
-        }
 
-        if (!sucesso)
-            Environment.Exit(1);
+            throw;
+        }
     }
 
     private void ProcessarEmpacotamento(string pasta, string saida, bool silencioso, List<string> arquivosGerados)
@@ -196,10 +196,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
         if (_fileSystem.File.Exists(destinoZip))
             _fileSystem.File.Delete(destinoZip);
 
-        using var zip = ZipFile.Open(destinoZip, ZipArchiveMode.Create);
-
-        foreach (var (arquivo, relativo) in arquivos)
-            zip.CreateEntryFromFile(arquivo, relativo);
+        _zipService.CompactarZip(pastaOrigem, arquivos, destinoZip);
 
         if (!silencioso)
             _console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
@@ -232,7 +229,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
             {
                 _console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao renomear arquivo {arquivo} para {novoCaminho}: {ex.Message}[/]");
 
-                Environment.Exit(1);
+                throw;
             }
 
             renomeados.Add((arquivo, novoCaminho));

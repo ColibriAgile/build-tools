@@ -3,10 +3,8 @@ using System.Text.Json;
 
 namespace BuildTools.Services;
 
-/// <summary>
-/// Serviço para empacotamento de scripts SQL conforme regras do empacotar_scripts.py.
-/// </summary>
-public sealed partial class EmpacotadorScriptsService
+/// <inheritdoc/>
+public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsService
 {
     private readonly IFileSystem _fileSystem;
 
@@ -17,14 +15,7 @@ public sealed partial class EmpacotadorScriptsService
     public EmpacotadorScriptsService(IFileSystem fileSystem)
         => _fileSystem = fileSystem;
 
-    /// <summary>
-    /// Verifica se existe um config.json válido na pasta.
-    /// </summary>
-    /// <param name="pasta">Caminho da pasta.</param>
-    /// <returns>True se existir e for válido, senão false.</returns>
-    /// <exception cref="InvalidOperationException">
-    /// Ocorre se o arquivo config.json não for válido.
-    /// </exception>
+    /// <inheritdoc/>
     public bool TemConfigJson(string pasta)
     {
         var arq = _fileSystem.Path.Combine(pasta, "config.json");
@@ -45,11 +36,7 @@ public sealed partial class EmpacotadorScriptsService
         }
     }
 
-    /// <summary>
-    /// Lista subpastas válidas para empacotamento (padrão regex: dois dígitos no início).
-    /// </summary>
-    /// <param name="pasta">Pasta base.</param>
-    /// <returns>Lista de subpastas válidas.</returns>
+    /// <inheritdoc/>
     public IEnumerable<string> ListarSubpastasValidas(string pasta)
     {
         var regex = RegexPastasValidas();
@@ -60,11 +47,7 @@ public sealed partial class EmpacotadorScriptsService
                 && TemConfigJson(subpasta));
     }
 
-    /// <summary>
-    /// Lista todos os arquivos de scripts recursivamente (incluindo subpastas) para empacotar no zip.
-    /// </summary>
-    /// <param name="pasta">Pasta de origem.</param>
-    /// <returns>Tuplas (caminho completo, caminho relativo para o zip).</returns>
+    /// <inheritdoc/>
     public IEnumerable<(string CaminhoCompleto, string CaminhoNoZip)> ListarArquivosComRelativo(string pasta)
     {
         // Inclui todos os arquivos .sql e .migration recursivamente, mantendo estrutura relativa
