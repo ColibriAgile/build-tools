@@ -2,7 +2,7 @@
 
 ![Build Status](https://github.com/ColibriAgile/BuildTools/actions/workflows/build.yml/badge.svg?branch=master)
 ![Testes](https://github.com/ColibriAgile/BuildTools/actions/workflows/testes.yml/badge.svg?branch=master)
-[![codecov](https://codecov.io/gh/ColibriAgile/BuildTools/branch/master/graph/badge.svg)](https://codecov.io/gh/ColibriAgile/BuildTools)
+[![codecov](https://codecov.io/gh/ColibriAgile/BuildTools/graph/badge.svg?token=IURQ5VBDSW)](https://codecov.io/gh/ColibriAgile/BuildTools)
 
 ## Índice
 
