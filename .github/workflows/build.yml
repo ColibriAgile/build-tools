@@ -64,9 +64,3 @@ jobs:
         path: BuildTools/bin/Release/net9.0/win-x64/publish/BuildTools-${{ steps.gitversion.outputs.assemblySemVer }}.win-x64.zip
         if-no-files-found: ignore
         retention-days: 2
-
-    - name: Upload release to GitHub Releases
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: BuildTools/bin/Release/net9.0/win-x64/publish/BuildTools-${{ steps.gitversion.outputs.assemblySemVer }}.win-x64.zip
