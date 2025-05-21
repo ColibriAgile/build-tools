@@ -39,14 +39,3 @@ jobs:
       with:
         name: code-coverage
         path: '**/TestResults/**/coverage.cobertura.xml'
-
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: ColibriAgile/BuildTools
-        directory: './BuildTools.Testes/TestResults/'
-        fail_ci_if_error: true
-        files: ./BuildTools.Testes/TestResults/**/coverage.cobertura.xml
-        flags: unittests
-        verbose: true
