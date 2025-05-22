@@ -1,4 +1,5 @@
 using BuildTools.Commands;
+using BuildTools.Models;
 using BuildTools.Services;
 using Spectre.Console.Testing;
 using System.CommandLine;
@@ -32,7 +33,8 @@ public sealed class EmpacotarCommandTestes
         const string PASTA = "C:\\pasta";
         const string SAIDA = "C:\\saida";
         const string CAMINHO_PACOTE = @"C:\saida\pacote.zip";
-        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(CAMINHO_PACOTE);
+        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -54,7 +56,8 @@ public sealed class EmpacotarCommandTestes
         // Arrange
         const string PASTA = "C:/pasta";
         const string SAIDA = "C:/saida";
-        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(x => throw new Exception("Falha ao empacotar"));
+        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            .Returns(x => throw new Exception("Falha ao empacotar"));
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -77,7 +80,8 @@ public sealed class EmpacotarCommandTestes
         const string PASTA = "C:/pasta";
         const string SAIDA = "C:/saida";
         const string CAMINHO_PACOTE = "C:/saida/pacote.zip";
-        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(CAMINHO_PACOTE);
+        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -101,7 +105,8 @@ public sealed class EmpacotarCommandTestes
         const string PASTA = "C:/pasta";
         const string SAIDA = "C:/saida";
         const string CAMINHO_PACOTE = "C:/saida/pacote.zip";
-        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(CAMINHO_PACOTE);
+        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -125,7 +130,8 @@ public sealed class EmpacotarCommandTestes
         const string PASTA = "C:/pasta";
         const string SAIDA = "C:/saida";
         const string CAMINHO_PACOTE = "C:/saida/pacote.zip";
-        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(CAMINHO_PACOTE);
+        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
 
         // Act
         var result = await _rootCommand.InvokeAsync

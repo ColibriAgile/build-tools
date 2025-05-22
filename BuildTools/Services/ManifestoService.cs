@@ -2,6 +2,7 @@ using BuildTools.Constants;
 using BuildTools.Models;
 using System.Text.Json;
 using System.IO.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace BuildTools.Services;
 
@@ -14,7 +15,7 @@ public sealed class ManifestoService : IManifestoService
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         WriteIndented = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     /// <summary>

@@ -29,7 +29,7 @@ public static class Startup
         services.AddSingleton<IEmpacotadorScriptsService, EmpacotadorScriptsService>();
         services.AddSingleton<IZipService, ZipService>();
         services.AddSingleton<IManifestoService, ManifestoService>();
-        services.AddSingleton<IArquivoListagemService, ArquivoListagemService>();
+        services.AddSingleton<IManifestoGeradorService, ManifestoGeradorService>();
         services.AddSingleton<IArquivoService, ArquivoService>();
 
         var silenciosoOption = new Option<bool>

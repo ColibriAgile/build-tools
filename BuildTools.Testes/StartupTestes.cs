@@ -27,8 +27,8 @@ public sealed class StartupTestes
         provider.GetService<IEmpacotadorScriptsService>().ShouldNotBeNull();
         provider.GetService<IZipService>().ShouldNotBeNull();
         provider.GetService<IManifestoService>().ShouldNotBeNull();
-        provider.GetService<IArquivoListagemService>().ShouldNotBeNull();
         provider.GetService<IArquivoService>().ShouldNotBeNull();
+        provider.GetService<IManifestoGeradorService>().ShouldNotBeNull();
         provider.GetService<IAnsiConsole>().ShouldNotBeNull();
     }
 
