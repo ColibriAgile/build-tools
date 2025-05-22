@@ -6,17 +6,39 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BuildTools.Commands;
 
-using System.Diagnostics;
-
 /// <summary>
 /// Comando para empacotar scripts conforme regras do empacotar_scripts.py.
 /// </summary>
-public sealed partial class EmpacotarScriptsCommand : Command
+public sealed class EmpacotarScriptsCommand : Command
 {
     private readonly IFileSystem _fileSystem;
     private readonly IAnsiConsole _console;
     private readonly IEmpacotadorScriptsService _empacotadorScriptsService;
-    private readonly IZipService _zipService;
+
+    private readonly Option<string> _pastaOption = new
+    (
+        aliases: ["--pasta", "-p"],
+        description: "Pasta de origem dos scripts"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<string> _saidaOption = new
+    (
+        aliases: ["--saida", "-s"],
+        description: "Pasta de saída"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<bool> _padronizarNomesOption = new
+    (
+        aliases: ["--padronizar_nomes", "-pn"],
+        static () => true,
+        description: "Padroniza o nome dos arquivos zip gerados conforme regex. (padrão: true)"
+    );
 
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarScriptsCommand"/>.
@@ -32,9 +54,6 @@ public sealed partial class EmpacotarScriptsCommand : Command
     /// </param>
     /// <param name="fileSystem">Serviço de manipulação do sistema de arquivos.</param>
     /// <param name="console">Console para saída formatada.</param>
-    /// <param name="zipService">
-    /// Serviço para manipulação de arquivos zip.
-    /// </param>
     /// <param name="empacotadorScriptsService">Serviço para empacotamento de scripts.</param>
     public EmpacotarScriptsCommand
     (
@@ -46,49 +65,23 @@ public sealed partial class EmpacotarScriptsCommand : Command
         Option<string> resumoOption,
         IFileSystem fileSystem,
         IAnsiConsole console,
-        IZipService zipService,
         IEmpacotadorScriptsService empacotadorScriptsService
     ) : base("empacotar_scripts", "Empacota os scripts sql de uma pasta em um pacote zip para ser incluído em um pacote .cmpkg.")
     {
-        var pastaOption = new Option<string>
-        (
-            aliases: ["--pasta", "-p"],
-            description: "Pasta de origem dos scripts"
-        )
-        {
-            IsRequired = true
-        };
-
-        var saidaOption = new Option<string>(
-            aliases: ["--saida", "-s"],
-            description: "Pasta de saída"
-        )
-        {
-            IsRequired = true
-        };
-
-        var padronizarNomesOption = new Option<bool>
-        (
-            aliases: ["--padronizar_nomes", "-pn"],
-            static () => true,
-            description: "Padroniza o nome dos arquivos zip gerados conforme regex. (padrão: true)"
-        );
-
-        AddOption(pastaOption);
-        AddOption(saidaOption);
-        AddOption(padronizarNomesOption);
+        AddOption(_pastaOption);
+        AddOption(_saidaOption);
+        AddOption(_padronizarNomesOption);
 
         _fileSystem = fileSystem;
         _console = console;
-        _zipService = zipService;
         _empacotadorScriptsService = empacotadorScriptsService;
 
         this.SetHandler
         (
             Handle,
-            pastaOption,
-            saidaOption,
-            padronizarNomesOption,
+            _pastaOption,
+            _saidaOption,
+            _padronizarNomesOption,
             silenciosoOption,
             semCorOption,
             resumoOption
@@ -107,35 +100,12 @@ public sealed partial class EmpacotarScriptsCommand : Command
     {
         try
         {
-            ConfigurarConsoleSemCor(semCor);
+            if (semCor)
+                AnsiConsole.Profile.Capabilities.Ansi = false;
 
-            if (!_fileSystem.Directory.Exists(pasta))
-            {
-                _console.MarkupLineInterpolated($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
+            var resultado = _empacotadorScriptsService.Empacotar(pasta, saida, padronizarNomes, silencioso);
 
-                throw new DirectoryNotFoundException($"A pasta de origem não existe: {pasta}");
-            }
-
-            CriarPastaSaidaSeNecessario(saida, silencioso);
-
-            var arquivosGerados = new List<string>();
-            var arquivosRenomeados = new List<(string Antigo, string Novo)>();
-            var sw = Stopwatch.StartNew();
-
-            if (!silencioso)
-                _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
-
-            ProcessarEmpacotamento(pasta, saida, silencioso, arquivosGerados);
-
-            if (padronizarNomes)
-                arquivosRenomeados = PadronizarNomesArquivos(arquivosGerados, silencioso);
-
-            sw.Stop();
-
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Todos os pacotes gerados com sucesso em {sw.Elapsed.TotalSeconds:N1}s.[/]");
-
-            ExibirResumo(arquivosGerados, arquivosRenomeados, resumo);
+            ExibirResumo(resultado.ArquivosGerados, resultado.ArquivosRenomeados, resumo);
         }
         catch (Exception ex)
         {
@@ -143,98 +113,6 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
             throw;
         }
-    }
-
-    private void ProcessarEmpacotamento(string pasta, string saida, bool silencioso, List<string> arquivosGerados)
-    {
-        if (_empacotadorScriptsService.TemConfigJson(pasta))
-        {
-            var destinoZip = Path.Combine(saida, "_scripts.zip");
-            EmpacotarScriptsDireto(pasta, destinoZip, silencioso);
-            arquivosGerados.Add(destinoZip);
-
-            return;
-        }
-
-        foreach (var subpasta in _empacotadorScriptsService.ListarSubpastasValidas(pasta))
-        {
-            var nome = Path.GetFileName(subpasta);
-            var destinoZip = Path.Combine(saida, $"_scripts{nome}.zip");
-            EmpacotarScriptsDireto(subpasta, destinoZip, silencioso);
-            arquivosGerados.Add(destinoZip);
-        }
-    }
-
-    private static void ConfigurarConsoleSemCor(bool semCor)
-    {
-        if (semCor)
-            AnsiConsole.Profile.Capabilities.Ansi = false;
-    }
-
-    private void CriarPastaSaidaSeNecessario(string saida, bool silencioso)
-    {
-        if (_fileSystem.Directory.Exists(saida))
-            return;
-
-        _fileSystem.Directory.CreateDirectory(saida);
-
-        if (!silencioso)
-            _console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
-    }
-
-    private void EmpacotarScriptsDireto(string pastaOrigem, string destinoZip, bool silencioso)
-    {
-        var arquivos = _empacotadorScriptsService.ListarArquivosComRelativo(pastaOrigem).ToList();
-
-        if (arquivos.Count == 0)
-        {
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[yellow][[WARN]] Nenhum arquivo de script encontrado em: {pastaOrigem}[/]");
-
-            return;
-        }
-
-        if (_fileSystem.File.Exists(destinoZip))
-            _fileSystem.File.Delete(destinoZip);
-
-        _zipService.CompactarZip(pastaOrigem, arquivos, destinoZip);
-
-        if (!silencioso)
-            _console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
-    }
-
-    private List<(string Antigo, string Novo)> PadronizarNomesArquivos(IEnumerable<string> arquivos, bool silencioso)
-    {
-        var regex = RegexPadronizaNomes();
-        var renomeados = new List<(string, string)>();
-
-        foreach (var (arquivo, nome, pasta, match) in arquivos
-            .Select(arq => (arq, Path.GetFileName(arq), Path.GetDirectoryName(arq), regex.Match(Path.GetFileName(arq))))
-            .Where(static res => res.Item4.Success))
-        {
-            var parte2 = match.Groups[2].Value;
-            var parte3 = match.Groups[3].Value;
-            var novoNome = $"scripts{parte2}{parte3}.zip";
-            var novoCaminho = Path.Combine(pasta!, novoNome);
-
-            try
-            {
-                _fileSystem.File.Move(arquivo, novoCaminho, overwrite: true);
-            }
-            catch (Exception ex)
-            {
-                _console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao renomear arquivo {arquivo} para {novoCaminho}: {ex.Message}[/]");
-
-                throw;
-            }
-
-            renomeados.Add((arquivo, novoCaminho));
-
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[blue][[INFO]] Arquivo renomeado: {nome} » {novoNome}[/]");
-        }
-
-        return renomeados;
     }
 
     /// <summary>
@@ -294,7 +172,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
                 ? "[root]"
                 : Path.GetRelativePath(_fileSystem.Directory.GetCurrentDirectory(), grupo.Key).EscapeMarkup();
 
-            var pastaNode = new Tree($"[blue]{pasta}[/]");
+            var pastaNode = new Tree($"[blue]{pasta.EscapeMarkup()}[/]");
 
             var table = new Table().RoundedBorder();
             table.AddColumn(new TableColumn("Arquivo"));
@@ -350,7 +228,4 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         _console.WriteLine("\n---");
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"^_scripts(\d{0,2})(\S+)?\.zip$")]
-    private static partial System.Text.RegularExpressions.Regex RegexPadronizaNomes();
 }

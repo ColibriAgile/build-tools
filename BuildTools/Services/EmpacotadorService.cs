@@ -50,13 +50,9 @@ public sealed class EmpacotadorService : IEmpacotadorService
         var prefixo = manifestoExpandido.Nome.Replace(" ", string.Empty) + "_";
         var nomeCmpkg = prefixo + manifestoExpandido.Versao.Replace(" ", string.Empty).Replace(".", "_") + Constants.EmpacotadorConstantes.EXTENSAO_PACOTE;
         var caminhoSaida = Path.Combine(pastaSaida.TrimEnd('\\'), nomeCmpkg);
-        _arquivoService.ExcluirComPrefixo(pastaSaida, prefixo, Constants.EmpacotadorConstantes.EXTENSAO_PACOTE);
+        _arquivoService.ExcluirComPrefixo(pastaSaida, prefixo);
         _zipService.CompactarZip(pasta, arquivos, caminhoSaida, senha);
 
-        return new EmpacotamentoResultado
-        {
-            CaminhoPacote = caminhoSaida,
-            ArquivosIncluidos = arquivos
-        };
+        return new EmpacotamentoResultado(caminhoSaida, arquivos);
     }
 }

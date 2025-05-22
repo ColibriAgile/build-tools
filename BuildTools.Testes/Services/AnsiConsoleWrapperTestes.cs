@@ -1,9 +1,8 @@
 using BuildTools.Services;
 using Spectre.Console;
+using Spectre.Console.Testing;
 
 namespace BuildTools.Testes.Services;
-
-using TestConsole = Spectre.Console.Testing.TestConsole;
 
 /// <summary>
 /// Testes unitários para o wrapper AnsiConsoleWrapper.
@@ -28,7 +27,7 @@ public sealed class AnsiConsoleWrapperTestes
     public void Error_DeveEscreverNoConsoleComErro()
     {
         // Arrange
-        var testConsole = new Spectre.Console.Testing.TestConsole();
+        var testConsole = new TestConsole();
         var wrapper = new AnsiConsoleWrapper(testConsole);
 
         // Act

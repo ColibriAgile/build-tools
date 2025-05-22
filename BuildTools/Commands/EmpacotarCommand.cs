@@ -16,6 +16,48 @@ public sealed class EmpacotarCommand : Command
     private readonly IEmpacotadorService _empacotadorService;
     private readonly IAnsiConsole _console;
 
+    private readonly Option<string> _pastaOption = new
+    (
+        aliases: ["--pasta", "-p"],
+        description: "Pasta de origem dos arquivos"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<string> _saidaOption = new
+    (
+        aliases: ["--saida", "-s"],
+        description: "Pasta de saída"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<string> _senhaOption = new
+    (
+        aliases: ["--senha", "-se"],
+        description: "Senha do pacote zip (opcional)"
+    )
+    {
+        IsRequired = false
+    };
+
+    private readonly Option<string> _versaoOption = new
+    (
+        aliases: ["--versao", "-v"],
+        description: "Versão do pacote (opcional, sobrescreve a do manifesto)"
+    )
+    {
+        IsRequired = false
+    };
+
+    private readonly Option<bool> _developOption = new
+    (
+        aliases: ["--develop", "-d"],
+        description: "Marca o pacote como versão de desenvolvimento (opcional)"
+    );
+
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarCommand"/>.
     /// </summary>
@@ -42,53 +84,11 @@ public sealed class EmpacotarCommand : Command
         IAnsiConsole console
     ) : base("empacotar", "[blue]Empacota arquivos de uma pasta para um pacote .cmpkg conforme regras do arquivo manifesto.server.[/]")
     {
-        var pastaOption = new Option<string>
-        (
-            aliases: ["--pasta", "-p"],
-            description: "Pasta de origem dos arquivos"
-        )
-        {
-            IsRequired = true
-        };
-
-        var saidaOption = new Option<string>
-        (
-            aliases: ["--saida", "-s"],
-            description: "Pasta de saída"
-        )
-        {
-            IsRequired = true
-        };
-
-        var senhaOption = new Option<string>
-        (
-            aliases: ["--senha", "-se"],
-            description: "Senha do pacote zip (opcional)"
-        )
-        {
-            IsRequired = false
-        };
-
-        var versaoOption = new Option<string>
-        (
-            aliases: ["--versao", "-v"],
-            description: "Versão do pacote (opcional, sobrescreve a do manifesto)"
-        )
-        {
-            IsRequired = false
-        };
-
-        var developOption = new Option<bool>
-        (
-            aliases: ["--develop", "-d"],
-            description: "Marca o pacote como versão de desenvolvimento (opcional)"
-        );
-
-        AddOption(pastaOption);
-        AddOption(saidaOption);
-        AddOption(senhaOption);
-        AddOption(versaoOption);
-        AddOption(developOption);
+        AddOption(_pastaOption);
+        AddOption(_saidaOption);
+        AddOption(_senhaOption);
+        AddOption(_versaoOption);
+        AddOption(_developOption);
 
         _empacotadorService = empacotadorService;
         _console = console;
@@ -96,11 +96,11 @@ public sealed class EmpacotarCommand : Command
         this.SetHandler
         (
             Handle,
-            pastaOption,
-            saidaOption,
-            senhaOption,
-            versaoOption,
-            developOption,
+            _pastaOption,
+            _saidaOption,
+            _senhaOption,
+            _versaoOption,
+            _developOption,
             silenciosoOption,
             semCorOption,
             resumoOption
