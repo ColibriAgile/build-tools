@@ -119,7 +119,7 @@ public sealed class EmpacotadorScriptsServiceTestes
         var service = CriarService(fs);
 
         // Act
-        var arquivos = service.ListarArquivosComRelativo(@"c:/pasta").ToList();
+        var arquivos = service.ListarArquivosComRelativo(@"c:\pasta").ToList();
 
         // Assert
         arquivos.ShouldContain(static x => x.CaminhoNoZip == "um.sql");

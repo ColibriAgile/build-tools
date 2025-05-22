@@ -69,7 +69,7 @@ public sealed class EmpacotadorService : IEmpacotadorService
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var arquivosIncluidos = arquivos.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var arquivosNaoIncluidos = todosArquivos.Except(arquivosIncluidos).ToList();
+        var arquivosNaoIncluidos = todosArquivos.Except(["manifesto.server", ..arquivosIncluidos]).ToList();
 
         if (arquivosNaoIncluidos.Count > 0)
             _console.MarkupLineInterpolated($"[yellow][[WARN]] Os seguintes arquivos não foram incluídos no pacote: {string.Join(", ", arquivosNaoIncluidos)}[/]");

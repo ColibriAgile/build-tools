@@ -1,7 +1,6 @@
 using BuildTools.Models;
 using BuildTools.Services;
 using System.Diagnostics.CodeAnalysis;
-using Spectre.Console;
 
 namespace BuildTools.Testes.Services;
 
@@ -18,7 +17,7 @@ public sealed class EmpacotadorServiceTestes
     private readonly IManifestoService _manifestoService = Substitute.For<IManifestoService>();
     private readonly IManifestoGeradorService _manifestoGeradorService = Substitute.For<IManifestoGeradorService>();
     private readonly IArquivoService _arquivoService = Substitute.For<IArquivoService>();
-    private readonly TestConsole _console = new TestConsole();
+    private readonly TestConsole _console = new();
     private readonly MockFileSystem _fileSystem = new();
     private readonly EmpacotadorService _service;
 
@@ -187,7 +186,7 @@ public sealed class EmpacotadorServiceTestes
         const string PASTA_SAIDA = @"C:\saida";
 
         // Cria arquivos na pasta de origem
-        _fileSystem.AddFile(@"C:\origem\manifesto.dat", new MockFileData("conteudo"));
+        _fileSystem.AddFile(@"C:\origem\manifesto.server", new MockFileData("conteudo"));
         _fileSystem.AddFile(@"C:\origem\nao_incluido.txt", new MockFileData("extra"));
 
         var manifestoOriginal = new Manifesto
@@ -212,6 +211,7 @@ public sealed class EmpacotadorServiceTestes
 
         // Assert
         _console.Output.ShouldContain("nao_incluido.txt");
+        _console.Output.ShouldNotContain("manifesto.server");
         _console.Output.ShouldContain("WARN");
     }
 }
