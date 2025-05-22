@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using System.Diagnostics;
 using BuildTools;
+using BuildTools.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 var rootCommand = new ServiceCollection()
@@ -8,7 +9,7 @@ var rootCommand = new ServiceCollection()
     .BuildServiceProvider()
     .ConfigureCommands();
 
-await rootCommand.InvokeAsync(args).ConfigureAwait(false);
+await rootCommand.InvokeAsync(args, new AnsiConsoleWrapper()).ConfigureAwait(false);
 
 if (Debugger.IsAttached)
 {

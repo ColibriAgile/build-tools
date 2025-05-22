@@ -44,10 +44,10 @@ public static class Startup
             description: "Desabilita cores ANSI na saída. (global)"
         );
 
-        var resumoOption = new Option<bool>
+        var resumoOption = new Option<string>
         (
             aliases: ["--resumo", "-r"],
-            description: "Exibe um resumo em Markdown ao final. (global)"
+            description: "Exibe um resumo no formato especificado ao final. Opções: nenhum (padrao), markdown, console. (global)"
         );
 
         services.AddKeyedSingleton("silencioso", silenciosoOption);
@@ -72,7 +72,7 @@ public static class Startup
 
         var silenciosoOption = serviceProvider.GetRequiredKeyedService<Option<bool>>("silencioso");
         var semCorOption = serviceProvider.GetRequiredKeyedService<Option<bool>>("semCor");
-        var resumoOption = serviceProvider.GetRequiredKeyedService<Option<bool>>("resumo");
+        var resumoOption = serviceProvider.GetRequiredKeyedService<Option<string>>("resumo");
 
         rootCommand.AddGlobalOption(silenciosoOption);
         rootCommand.AddGlobalOption(semCorOption);

@@ -14,7 +14,7 @@ public sealed class EmpacotarCommandTestes
     private readonly TestConsole _console = new();
     private readonly Option<bool> _silenciosoOption = new(aliases: ["--silencioso", "-s"]);
     private readonly Option<bool> _semCorOption = new(aliases: ["--sem-cor", "-sc"]);
-    private readonly Option<bool> _resumoOption = new(aliases: ["--resumo", "-r"]);
+    private readonly Option<string> _resumoOption = new(aliases: ["--resumo", "-r"]);
     private readonly RootCommand _rootCommand = new("Colibri BuildTools - Empacotador de soluções");
 
     public EmpacotarCommandTestes()
@@ -30,11 +30,12 @@ public sealed class EmpacotarCommandTestes
     public async Task InvokeAsync_QuandoEmpacotamentoComSucesso_DeveExibirMensagemDeSucesso()
     {
         // Arrange
-        const string PASTA = "C:\\pasta";
-        const string SAIDA = "C:\\saida";
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
         const string CAMINHO_PACOTE = @"C:\saida\pacote.zip";
+
         _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = ["manifesto.dat", "arquivo1.txt"] });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -54,10 +55,11 @@ public sealed class EmpacotarCommandTestes
     public async Task InvokeAsync_QuandoEmpacotamentoFalha_DeveExibirMensagemDeErro()
     {
         // Arrange
-        const string PASTA = "C:/pasta";
-        const string SAIDA = "C:/saida";
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
+
         _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-            .Returns(x => throw new Exception("Falha ao empacotar"));
+            .Returns(static _ => throw new Exception("Falha ao empacotar"));
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -77,11 +79,12 @@ public sealed class EmpacotarCommandTestes
     public async Task InvokeAsync_QuandoResumoTrue_DeveExibirResumoMarkdown()
     {
         // Arrange
-        const string PASTA = "C:/pasta";
-        const string SAIDA = "C:/saida";
-        const string CAMINHO_PACOTE = "C:/saida/pacote.zip";
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
+        const string CAMINHO_PACOTE = @"C:\saida\pacote.zip";
+
         _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = ["manifesto.dat", "arquivo1.txt"] });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -89,7 +92,7 @@ public sealed class EmpacotarCommandTestes
             "empacotar",
             "--pasta", PASTA,
             "--saida", SAIDA,
-            "--resumo", "true"
+            "--resumo", "markdown"
         ]);
 
         // Assert
@@ -102,11 +105,12 @@ public sealed class EmpacotarCommandTestes
     public async Task InvokeAsync_QuandoSilenciosoTrue_NaoDeveExibirMensagensDeInfoOuSucesso()
     {
         // Arrange
-        const string PASTA = "C:/pasta";
-        const string SAIDA = "C:/saida";
-        const string CAMINHO_PACOTE = "C:/saida/pacote.zip";
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
+        const string CAMINHO_PACOTE = @"C:\saida\pacote.zip";
+
         _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = ["manifesto.dat", "arquivo1.txt"] });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -127,11 +131,12 @@ public sealed class EmpacotarCommandTestes
     public async Task InvokeAsync_QuandoSemCorTrue_DeveDesabilitarAnsiConsole()
     {
         // Arrange
-        const string PASTA = "C:/pasta";
-        const string SAIDA = "C:/saida";
-        const string CAMINHO_PACOTE = "C:/saida/pacote.zip";
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
+        const string CAMINHO_PACOTE = @"C:\saida\pacote.zip";
+
         _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = new List<string> { "manifesto.dat", "arquivo1.txt" } });
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = ["manifesto.dat", "arquivo1.txt"] });
 
         // Act
         var result = await _rootCommand.InvokeAsync
@@ -145,5 +150,91 @@ public sealed class EmpacotarCommandTestes
         // Assert
         result.ShouldBe(0);
         _console.Output.ShouldContain("SUCCESS");
+    }
+
+    [Fact]
+    public void ExibirResumoConsole_DeveExibirTabelaComPacoteENomesDosArquivos()
+    {
+        // Arrange
+        var console = new TestConsole();
+        var empacotadorService = Substitute.For<IEmpacotadorService>();
+        var cmd = new EmpacotarCommand(_silenciosoOption, _semCorOption, _resumoOption, empacotadorService, console);
+
+        var resultado = new EmpacotamentoResultado
+        {
+            CaminhoPacote = @"C:\saida\pacote.cmpkg",
+            ArquivosIncluidos = ["manifesto.dat", "arquivo1.txt", "dados.csv"]
+        };
+
+        // Act
+        var metodo = cmd.GetType().GetMethod("ExibirResumoConsole", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        metodo!.Invoke(cmd, [resultado]);
+
+        // Assert
+        var output = console.Output;
+        output.ShouldContain("Resumo do Empacotamento");
+        output.ShouldContain("Pacote Gerado");
+        output.ShouldContain("Arquivos Incluídos");
+        output.ShouldContain("pacote.cmpkg");
+        output.ShouldContain("manifesto.dat");
+        output.ShouldContain("arquivo1.txt");
+        output.ShouldContain("dados.csv");
+    }
+
+    [Fact]
+    public void ExibirResumoConsole_DeveExibirTabelaMesmoSemArquivosIncluidos()
+    {
+        // Arrange
+        var console = new TestConsole();
+        var empacotadorService = Substitute.For<IEmpacotadorService>();
+        var cmd = new EmpacotarCommand(_silenciosoOption, _semCorOption, _resumoOption, empacotadorService, console);
+
+        var resultado = new EmpacotamentoResultado
+        {
+            CaminhoPacote = @"C:\saida\pacote.cmpkg",
+            ArquivosIncluidos = []
+        };
+
+        // Act
+        var metodo = cmd.GetType().GetMethod("ExibirResumoConsole", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        metodo!.Invoke(cmd, [resultado]);
+
+        // Assert
+        var output = console.Output;
+        output.ShouldContain("Resumo do Empacotamento");
+        output.ShouldContain("Pacote Gerado");
+        output.ShouldContain("Arquivos Incluídos");
+        output.ShouldContain("pacote.cmpkg");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_QuandoResumoConsole_DeveExibirResumoConsole()
+    {
+        // Arrange
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
+        const string CAMINHO_PACOTE = @"C:\saida\pacote.cmpkg";
+
+        _empacotadorService.Empacotar(PASTA, SAIDA, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+            .Returns(new EmpacotamentoResultado { CaminhoPacote = CAMINHO_PACOTE, ArquivosIncluidos = ["manifesto.dat", "arquivo1.txt", "dados.csv"] });
+
+        // Act
+        var result = await _rootCommand.InvokeAsync
+        ([
+            "empacotar",
+            "--pasta", PASTA,
+            "--saida", SAIDA,
+            "--resumo", "console"
+        ]);
+
+        // Assert
+        result.ShouldBe(0);
+        _console.Output.ShouldContain("Resumo do Empacotamento");
+        _console.Output.ShouldContain("Pacote Gerado");
+        _console.Output.ShouldContain("Arquivos Incluídos");
+        _console.Output.ShouldContain("pacote.cmpkg");
+        _console.Output.ShouldContain("manifesto.dat");
+        _console.Output.ShouldContain("arquivo1.txt");
+        _console.Output.ShouldContain("dados.csv");
     }
 }

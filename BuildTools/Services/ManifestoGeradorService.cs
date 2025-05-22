@@ -105,19 +105,19 @@ public sealed class ManifestoGeradorService : IManifestoGeradorService
             if (!arquivosDiretorio.Contains(nomePrevisto, StringComparer.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"Arquivo previsto no manifesto não encontrado: {nomePrevisto}");
 
-            if (arquivosJaAssociados.Contains(nomePrevisto))
-                continue;
-
-            arquivosManifesto.Add
-            (
-                new ManifestoArquivo
-                {
-                    Nome = nomePrevisto,
-                    Destino = previsto.Destino,
-                    PatternNome = null,
-                    Extras = previsto.Extras
-                }
-            );
+            if (!arquivosJaAssociados.Contains(nomePrevisto))
+            {
+                arquivosManifesto.Add
+                (
+                    new ManifestoArquivo
+                    {
+                        Nome = nomePrevisto,
+                        Destino = previsto.Destino,
+                        PatternNome = null,
+                        Extras = previsto.Extras
+                    }
+                );
+            }
 
             arquivosJaAssociados.Add(nomePrevisto);
         }

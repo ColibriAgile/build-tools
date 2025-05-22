@@ -15,7 +15,7 @@ public sealed class EmpacotarScriptsCommandTestes
     private readonly IEmpacotadorScriptsService _service;
     private readonly Option<bool> _silenciosoOption = new(aliases: ["--silencioso", "-s"]);
     private readonly Option<bool> _semCorOption = new(aliases: ["--sem-cor", "-sc"]);
-    private readonly Option<bool> _resumoOption = new(aliases: ["--resumo", "-r"]);
+    private readonly Option<string> _resumoOption = new(aliases: ["--resumo", "-r"]);
     private readonly RootCommand _rootCommand = new("Colibri BuildTools - Empacotador de soluções");
 
     public EmpacotarScriptsCommandTestes()
@@ -32,11 +32,11 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoPastaNaoExiste_DeveExibirErro()
     {
         // Arrange
-        const string PASTA = "C:/naoexiste";
+        const string PASTA = @"C:\naoexiste";
         _fileSystem.Directory.Exists(PASTA).Returns(false);
 
         // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA, "--saida", "C:/saida"]);
+        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA, "--saida", @"C:\saida"]);
 
         // Assert
         result.ShouldNotBe(0); // Deve retornar erro
@@ -47,8 +47,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoPastaExiste_DeveExecutarComSucesso()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:\\pasta";
-        const string PASTA_SAIDA = "C:\\saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         const string ZIP = @"C:\pasta\_scripts.zip";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(true);
@@ -70,8 +70,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoZipDestinoExiste_DeveApagarZip()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:\\pasta";
-        const string PASTA_SAIDA = "C:\\saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         const string ZIP = @"C:\pasta\_scripts.zip";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(true);
@@ -94,9 +94,9 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoNaoHaArquivosNaPasta_DeveExibirAviso()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
-        const string ZIP = "C:/pasta/_scripts.zip";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
+        const string ZIP = @"C:\pasta\_scripts.zip";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
@@ -116,9 +116,9 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoPadronizarNomesFalse_NaoDeveChamarPadronizarNomes()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
-        const string ZIP = "c:/pasta/_scripts.zip";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
+        const string ZIP = @"C:\pasta\_scripts.zip";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
@@ -128,7 +128,18 @@ public sealed class EmpacotarScriptsCommandTestes
         _service.ListarArquivosComRelativo(PASTA_ORIGEM).Returns(arquivos);
 
         // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA, "--padronizar_nomes", "false"]);
+        var result = await _rootCommand.InvokeAsync
+        (
+            [
+                "empacotar_scripts",
+                "--pasta",
+                PASTA_ORIGEM,
+                "--saida",
+                PASTA_SAIDA,
+                "--padronizar_nomes",
+                "false"
+            ]
+        );
 
         // Assert
         result.ShouldBe(0);
@@ -139,16 +150,16 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoSubpastasValidas_DeveEmpacotarCadaSubpasta()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
-        var subpastas = new[] { "C:/pasta/01", "C:/pasta/02" };
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
+        var subpastas = new[] { @"C:\pasta\01", @"C:\pasta\02" };
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
         _service.TemConfigJson(PASTA_ORIGEM).Returns(false);
         _service.ListarSubpastasValidas(PASTA_ORIGEM).Returns(subpastas);
-        _service.ListarArquivosComRelativo("C:/pasta/01").Returns(new List<(string, string)> { ("arq.sql", "arq.sql") });
-        _service.ListarArquivosComRelativo("C:/pasta/02").Returns(new List<(string, string)> { ("arq.sql", "arq.sql") });
+        _service.ListarArquivosComRelativo(@"C:\pasta/01").Returns(new List<(string, string)> { ("arq.sql", "arq.sql") });
+        _service.ListarArquivosComRelativo(@"C:\pasta/02").Returns(new List<(string, string)> { ("arq.sql", "arq.sql") });
 
         // Act
         var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA]);
@@ -162,8 +173,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoCriarPastaSaidaFalha_DeveExibirErro()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(false);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(static _ => throw new UnauthorizedAccessException("Sem permissão"));
@@ -181,8 +192,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoProcessarEmpacotamentoLancaExcecao_DeveExibirErro()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
         _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
@@ -200,8 +211,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoPadronizarNomesException_ImprimeErro()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
         _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
@@ -210,7 +221,18 @@ public sealed class EmpacotarScriptsCommandTestes
         _fileSystem.File.WhenForAnyArgs(static f => f.Move("", "", overwrite: true)).Throws(new IOException("Erro ao mover arquivo"));
 
         // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA, "--padronizar_nomes", "true"]);
+        var result = await _rootCommand.InvokeAsync
+        (
+            [
+                "empacotar_scripts",
+                "--pasta",
+                PASTA_ORIGEM,
+                "--saida",
+                PASTA_SAIDA,
+                "--padronizar_nomes",
+                "true"
+            ]
+        );
 
         // Assert
         result.ShouldBe(1);
@@ -221,8 +243,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoResumoTrue_DeveExibirResumoMarkdown()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
         _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
@@ -230,7 +252,7 @@ public sealed class EmpacotarScriptsCommandTestes
         _service.ListarArquivosComRelativo(PASTA_ORIGEM).Returns(arquivos);
 
         // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA, "--resumo", "true"]);
+        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA, "--resumo", "markdown"]);
 
         // Assert
         result.ShouldBe(0);
@@ -241,8 +263,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoPastaSaidaJaExiste_NaoDeveCriarNovamente()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.Exists(PASTA_SAIDA).Returns(true);
         _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
@@ -260,8 +282,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoSilenciosoTrue_NaoDeveExibirMensagens()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
         _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
@@ -269,7 +291,18 @@ public sealed class EmpacotarScriptsCommandTestes
         _service.ListarArquivosComRelativo(PASTA_ORIGEM).Returns(arquivos);
 
         // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA, "--silencioso", "true"]);
+        var result = await _rootCommand.InvokeAsync
+        (
+            [
+                "empacotar_scripts",
+                "--pasta",
+                PASTA_ORIGEM,
+                "--saida",
+                PASTA_SAIDA,
+                "--silencioso",
+                "true"
+            ]
+        );
 
         // Assert
         result.ShouldBe(0);
@@ -281,8 +314,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoSemCorTrue_DeveDesabilitarAnsiConsole()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:/pasta";
-        const string PASTA_SAIDA = "C:/saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
         _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
@@ -290,7 +323,18 @@ public sealed class EmpacotarScriptsCommandTestes
         _service.ListarArquivosComRelativo(PASTA_ORIGEM).Returns(arquivos);
 
         // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA, "--sem-cor", "true"]);
+        var result = await _rootCommand.InvokeAsync
+        (
+            [
+                "empacotar_scripts",
+                "--pasta",
+                PASTA_ORIGEM,
+                "--saida",
+                PASTA_SAIDA,
+                "--sem-cor",
+                "true"
+            ]
+        );
 
         // Assert
         result.ShouldBe(0);
@@ -301,8 +345,8 @@ public sealed class EmpacotarScriptsCommandTestes
     public async Task InvokeAsync_QuandoPadronizarNomesComSubpastasValidas_DevePadronizarNomesArquivos()
     {
         // Arrange
-        const string PASTA_ORIGEM = "C:\\pasta";
-        const string PASTA_SAIDA = "C:\\saida";
+        const string PASTA_ORIGEM = @"C:\pasta";
+        const string PASTA_SAIDA = @"C:\saida";
         const string PASTA_1 = "01_dconnect_pgsql";
         const string PASTA_2 = "02_dconnect_mssql";
         const string PASTA_3 = "05_master";
@@ -348,5 +392,35 @@ public sealed class EmpacotarScriptsCommandTestes
         _fileSystem.File.Received().Move(@"C:\saida\_scripts05_master.zip", @"C:\saida\scripts_master.zip", overwrite: true);
         _console.Output.ShouldContain("SUCCESS");
         _console.Output.ShouldNotContain("uteis");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_QuandoResumoConsole_DeveExibirResumoConsole()
+    {
+        // Arrange
+        const string PASTA = @"C:\pasta";
+        const string SAIDA = @"C:\saida";
+        const string ZIP = @"C:\saida\_scripts.zip";
+        _fileSystem.Directory.Exists(PASTA).Returns(true);
+        _fileSystem.Directory.Exists(SAIDA).Returns(true);
+        _fileSystem.File.Exists(ZIP).Returns(false);
+        _fileSystem.Directory.GetCurrentDirectory().Returns(PASTA);
+        _service.TemConfigJson(PASTA).Returns(true);
+        var arquivos = new List<(string caminhoCompleto, string caminhoNoZip)> { ("arq.sql", "arq.sql") };
+        _service.ListarArquivosComRelativo(PASTA).Returns(arquivos);
+
+        // Act
+        var result = await _rootCommand.InvokeAsync
+        ( [
+            "empacotar_scripts",
+            "--pasta", PASTA,
+            "--saida", SAIDA,
+            "--resumo", "console"
+        ] );
+
+        // Assert
+        result.ShouldBe(0);
+        _console.Output.ShouldContain("Resumo dos pacotes gerados");
+        _console.Output.ShouldContain("_scripts.zip");
     }
 }
