@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BuildTools.Services;
 using Spectre.Console;
 using Spectre.Console.Testing;
@@ -7,6 +8,7 @@ namespace BuildTools.Testes.Services;
 /// <summary>
 /// Testes unitários para o wrapper AnsiConsoleWrapper.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public sealed class AnsiConsoleWrapperTestes
 {
     [Fact]

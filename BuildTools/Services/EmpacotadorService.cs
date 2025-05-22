@@ -1,6 +1,9 @@
 using BuildTools.Models;
+using Spectre.Console;
 
 namespace BuildTools.Services;
+
+using System.IO.Abstractions;
 
 /// <inheritdoc cref="IEmpacotadorService"/>
 public sealed class EmpacotadorService : IEmpacotadorService
@@ -9,19 +12,25 @@ public sealed class EmpacotadorService : IEmpacotadorService
     private readonly IManifestoService _manifestoService;
     private readonly IManifestoGeradorService _manifestoGeradorService;
     private readonly IArquivoService _arquivoService;
+    private readonly IAnsiConsole _console;
+    private readonly IFileSystem _fileSystem;
 
     public EmpacotadorService
     (
         IZipService zipService,
         IManifestoService manifestoService,
         IManifestoGeradorService manifestoGeradorService,
-        IArquivoService arquivoService
+        IArquivoService arquivoService,
+        IAnsiConsole console,
+        IFileSystem fileSystem
     )
     {
         _zipService = zipService;
         _manifestoService = manifestoService;
         _manifestoGeradorService = manifestoGeradorService;
         _arquivoService = arquivoService;
+        _console = console;
+        _fileSystem = fileSystem;
     }
 
     /// <inheritdoc />
@@ -52,6 +61,18 @@ public sealed class EmpacotadorService : IEmpacotadorService
         var caminhoSaida = Path.Combine(pastaSaida.TrimEnd('\\'), nomeCmpkg);
         _arquivoService.ExcluirComPrefixo(pastaSaida, prefixo);
         _zipService.CompactarZip(pasta, arquivos, caminhoSaida, senha);
+
+        // Verifica arquivos não incluídos no pacote
+        var todosArquivos = _fileSystem.Directory.GetFiles(pasta)
+            .Select(Path.GetFileName)
+            .Where(static n => !string.IsNullOrWhiteSpace(n))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var arquivosIncluidos = arquivos.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var arquivosNaoIncluidos = todosArquivos.Except(arquivosIncluidos).ToList();
+
+        if (arquivosNaoIncluidos.Count > 0)
+            _console.MarkupLineInterpolated($"[yellow][[WARN]] Os seguintes arquivos não foram incluídos no pacote: {string.Join(", ", arquivosNaoIncluidos)}[/]");
 
         return new EmpacotamentoResultado(caminhoSaida, arquivos);
     }

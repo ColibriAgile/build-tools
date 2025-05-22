@@ -30,8 +30,7 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
         _zipService = zipService;
     }
 
-    /// <inheritdoc/>
-    public bool TemConfigJson(string pasta)
+    internal bool TemConfigJson(string pasta)
     {
         var arq = Path.Combine(pasta, "config.json");
 
@@ -171,8 +170,7 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
             _console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
     }
 
-    /// <inheritdoc/>
-    public IEnumerable<string> ListarSubpastasValidas(string pasta)
+    internal IEnumerable<string> ListarSubpastasValidas(string pasta)
     {
         var regex = RegexPastasValidas();
 
@@ -182,8 +180,7 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
                 && TemConfigJson(subpasta));
     }
 
-    /// <inheritdoc/>
-    public IEnumerable<(string CaminhoCompleto, string CaminhoNoZip)> ListarArquivosComRelativo(string pasta)
+    internal IEnumerable<(string CaminhoCompleto, string CaminhoNoZip)> ListarArquivosComRelativo(string pasta)
     {
         // Inclui todos os arquivos .sql e .migration recursivamente, mantendo estrutura relativa
         var arquivos = _fileSystem.Directory
