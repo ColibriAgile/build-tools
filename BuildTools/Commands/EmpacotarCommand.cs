@@ -82,7 +82,7 @@ public sealed class EmpacotarCommand : Command
         Option<string> resumoOption,
         IEmpacotadorService empacotadorService,
         IAnsiConsole console
-    ) : base("empacotar", "[blue]Empacota arquivos de uma pasta para um pacote .cmpkg conforme regras do arquivo manifesto.server.[/]")
+    ) : base("empacotar", "Empacota arquivos de uma pasta para um pacote .cmpkg conforme regras do arquivo manifesto.server.")
     {
         AddOption(_pastaOption);
         AddOption(_saidaOption);

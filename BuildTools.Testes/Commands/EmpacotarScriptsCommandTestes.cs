@@ -53,8 +53,7 @@ public sealed class EmpacotarScriptsCommandTestes
         const string PASTA_SAIDA = @"C:\saida";
         _fileSystem.Directory.Exists(PASTA_ORIGEM).Returns(true);
         _fileSystem.Directory.CreateDirectory(PASTA_SAIDA).Returns(Substitute.For<IDirectoryInfo>());
-        _service.TemConfigJson(PASTA_ORIGEM).Returns(true);
-        _service.ListarArquivosComRelativo(PASTA_ORIGEM).Returns(static _ => throw new Exception("Falha interna"));
+        _service.Empacotar(PASTA_ORIGEM, PASTA_SAIDA, true, false).Returns(static _ => throw new Exception("Falha interna"));
 
         // Act
         var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA_ORIGEM, "--saida", PASTA_SAIDA]);
