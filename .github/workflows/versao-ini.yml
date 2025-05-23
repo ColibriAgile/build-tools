@@ -1,42 +1,39 @@
-name: Gerar versão a partir do versao.ini
+name: 'Obter versão'
+description: 'Extrai versão do arquivo ini'
 
-on:
-  workflow_call:
-    inputs:
-      caminho-versao-ini:
-        required: true
-        type: string
-    outputs:
-      versao:
-        description: 'String de versão gerada a partir do versao.ini'
-        value: ${{ jobs.gerar-versao.outputs.versao }}
-
-jobs:
-  gerar-versao:
-    runs-on: windows-latest
-    outputs:
-      versao: ${{ steps.ler-versao.outputs.versao }}
-    steps:
-      - name: Ler versao.ini e gerar string de versão
-        id: ler-versao
-        shell: pwsh
-        run: |
-          $ini = Get-Content "${{ inputs.caminho-versao-ini }}" | Where-Object { $_ -match '=' }
-          $dict = @{}
-          foreach ($line in $ini) {
-            $parts = $line -split '=', 2
-            $key = $parts[0].Trim()
-            $value = $parts[1].Trim()
-            $dict[$key] = $value
-          }
-          $major = $dict['MajorVersion']
-          $minor = $dict['MinorVersion']
-          $release = $dict['Release']
-          $build = "${{ github.run_number }}"
-          $versao = "$major.$minor.$release.$build"
-          echo "versao=$versao" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
-      - name: Exibir versão gerada
-        shell: pwsh
-        run: |
-          echo "Versão gerada: ${{ steps.ler-versao.outputs.versao }}"
+inputs:
+  caminho-versao-ini:
+    description: 'Caminho para o arquivo versao.ini'
+    required: true
+    
+outputs:
+  versao:
+    description: 'String de versão gerada a partir do versao.ini'
+    value: ${{ steps.ler-versao.outputs.versao }}
+    
+runs:
+  using: 'composite'
+  steps:
+    - name: Ler versao.ini e gerar string de versão
+      id: ler-versao
+      shell: pwsh
+      run: |
+        $ini = Get-Content "${{ inputs.caminho-versao-ini }}" | Where-Object { $_ -match '=' }
+        $dict = @{}
+        foreach ($line in $ini) {
+          $parts = $line -split '=', 2
+          $key = $parts[0].Trim()
+          $value = $parts[1].Trim()
+          $dict[$key] = $value
+        }
+        $major = $dict['MajorVersion']
+        $minor = $dict['MinorVersion']
+        $release = $dict['Release']
+        $build = "${{ github.run_number }}"
+        $versao = "$major.$minor.$release.$build"
+        echo "versao=$versao" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    
+    - name: Exibir versão gerada
+      shell: pwsh
+      run: |
+        echo "Versão gerada: ${{ steps.ler-versao.outputs.versao }}"
