@@ -25,29 +25,56 @@ jobs:
       run: dotnet restore BuildTools.Testes/BuildTools.Testes.csproj
 
     - name: Test with coverage
-      run: dotnet test BuildTools.Testes/BuildTools.Testes.csproj --verbosity normal --collect:"XPlat Code Coverage" --logger trx
+      run: |
+        dotnet test BuildTools.Testes/BuildTools.Testes.csproj `
+          --verbosity normal `
+          --collect:"XPlat Code Coverage" `
+          --logger trx `
+          --results-directory TestResults
+
+    - name: List test results (debug)
+      if: always()
+      run: |
+        echo "Conteúdo do diretório TestResults:"
+        dir TestResults -Recurse
+        echo "Procurando arquivos .trx:"
+        Get-ChildItem -Path . -Filter "*.trx" -Recurse | Select-Object FullName
+        echo "Procurando arquivos de coverage:"
+        Get-ChildItem -Path . -Filter "coverage.cobertura.xml" -Recurse | Select-Object FullName
 
     - name: Publish test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: '**/TestResults/*.trx'
+        path: TestResults/**/*.trx
+        if-no-files-found: warn
 
     - name: Publish code coverage
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: code-coverage
-        path: '**/TestResults/**/coverage.cobertura.xml'
+        path: TestResults/**/coverage.cobertura.xml
+        if-no-files-found: warn
 
     - name: Upload coverage reports to Codecov
+      if: success()
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: ColibriAgile/build-tools
-        directory: './BuildTools.Testes/TestResults/'
-        fail_ci_if_error: true
-        files: ./BuildTools.Testes/TestResults/**/coverage.cobertura.xml
+        directory: ./TestResults/
+        fail_ci_if_error: false
+        files: ./TestResults/**/coverage.cobertura.xml
         flags: unittests
         verbose: true
+
+    - name: Publish Test Results to GitHub
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: .NET Tests
+        path: TestResults/**/*.trx
+        reporter: dotnet-trx
+        fail-on-error: false
