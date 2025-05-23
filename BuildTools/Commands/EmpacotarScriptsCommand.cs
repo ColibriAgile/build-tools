@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.IO.Abstractions;
-using System.IO.Compression;
 using Spectre.Console;
 using BuildTools.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,11 +9,36 @@ namespace BuildTools.Commands;
 /// <summary>
 /// Comando para empacotar scripts conforme regras do empacotar_scripts.py.
 /// </summary>
-public sealed partial class EmpacotarScriptsCommand : Command
+public sealed class EmpacotarScriptsCommand : Command
 {
     private readonly IFileSystem _fileSystem;
     private readonly IAnsiConsole _console;
-    private readonly EmpacotadorScriptsService _empacotadorScriptsService;
+    private readonly IEmpacotadorScriptsService _empacotadorScriptsService;
+
+    private readonly Option<string> _pastaOption = new
+    (
+        aliases: ["--pasta", "-p"],
+        description: "Pasta de origem dos scripts"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<string> _saidaOption = new
+    (
+        aliases: ["--saida", "-s"],
+        description: "Pasta de saída"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<bool> _padronizarNomesOption = new
+    (
+        aliases: ["--padronizar_nomes", "-pn"],
+        static () => true,
+        description: "Padroniza o nome dos arquivos zip gerados conforme regex. (padrão: true)"
+    );
 
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarScriptsCommand"/>.
@@ -28,7 +52,7 @@ public sealed partial class EmpacotarScriptsCommand : Command
     /// <param name="semCorOption">
     /// Se deve executar o comando sem cores.
     /// </param>
-    /// <param name="fileSystem">Abstração do sistema de arquivos.</param>
+    /// <param name="fileSystem">Serviço de manipulação do sistema de arquivos.</param>
     /// <param name="console">Console para saída formatada.</param>
     /// <param name="empacotadorScriptsService">Serviço para empacotamento de scripts.</param>
     public EmpacotarScriptsCommand
@@ -38,39 +62,15 @@ public sealed partial class EmpacotarScriptsCommand : Command
         [FromKeyedServices("semCor")]
         Option<bool> semCorOption,
         [FromKeyedServices("resumo")]
-        Option<bool> resumoOption,
+        Option<string> resumoOption,
         IFileSystem fileSystem,
         IAnsiConsole console,
-        EmpacotadorScriptsService empacotadorScriptsService
-    ) : base("empacotar_scripts", "Empacota scripts de banco de dados para sistemas Colibri.")
+        IEmpacotadorScriptsService empacotadorScriptsService
+    ) : base("empacotar_scripts", "Empacota os scripts sql de uma pasta em um pacote zip para ser incluído em um pacote .cmpkg.")
     {
-        var pastaOption = new Option<string>
-        (
-            aliases: ["--pasta", "-p"],
-            description: "Pasta de origem dos scripts"
-        )
-        {
-            IsRequired = true
-        };
-
-        var saidaOption = new Option<string>(
-            aliases: ["--saida", "-s"],
-            description: "Pasta de saída"
-        )
-        {
-            IsRequired = true
-        };
-
-        var padronizarNomesOption = new Option<bool>
-        (
-            aliases: ["--padronizar_nomes", "-pn"],
-            static () => true,
-            description: "Padroniza o nome dos arquivos zip gerados conforme regex. (padrão: true)"
-        );
-
-        AddOption(pastaOption);
-        AddOption(saidaOption);
-        AddOption(padronizarNomesOption);
+        AddOption(_pastaOption);
+        AddOption(_saidaOption);
+        AddOption(_padronizarNomesOption);
 
         _fileSystem = fileSystem;
         _console = console;
@@ -79,9 +79,9 @@ public sealed partial class EmpacotarScriptsCommand : Command
         this.SetHandler
         (
             Handle,
-            pastaOption,
-            saidaOption,
-            padronizarNomesOption,
+            _pastaOption,
+            _saidaOption,
+            _padronizarNomesOption,
             silenciosoOption,
             semCorOption,
             resumoOption
@@ -95,140 +95,118 @@ public sealed partial class EmpacotarScriptsCommand : Command
         bool padronizarNomes,
         bool silencioso,
         bool semCor,
-        bool resumo
+        string resumo
     )
     {
-        if (semCor)
-            AnsiConsole.Profile.Capabilities.Ansi = false;
-
-        if (!_fileSystem.Directory.Exists(pasta))
-        {
-            _console.MarkupLine($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
-            Environment.Exit(1);
-
-            return;
-        }
-
-        if (!_fileSystem.Directory.Exists(saida))
-        {
-            _fileSystem.Directory.CreateDirectory(saida);
-
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
-        }
-
-        var arquivosGerados = new List<string>();
-        var arquivosRenomeados = new List<(string Antigo, string Novo)>();
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        var sucesso = true;
-
         try
         {
-            if (!silencioso)
-                _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
+            if (semCor)
+                AnsiConsole.Profile.Capabilities.Ansi = false;
 
-            if (_empacotadorScriptsService.TemConfigJson(pasta))
-            {
-                var destinoZip = _fileSystem.Path.Combine(saida, "_scripts.zip");
-                EmpacotarScriptsDireto(pasta, destinoZip, silencioso);
-                arquivosGerados.Add(destinoZip);
-            }
-            else
-            {
-                foreach (var subpasta in _empacotadorScriptsService.ListarSubpastasValidas(pasta))
-                {
-                    var nome = _fileSystem.Path.GetFileName(subpasta);
-                    var destinoZip = _fileSystem.Path.Combine(saida, $"_scripts{nome}.zip");
-                    EmpacotarScriptsDireto(subpasta, destinoZip, silencioso);
-                    arquivosGerados.Add(destinoZip);
-                }
-            }
+            var resultado = _empacotadorScriptsService.Empacotar(pasta, saida, padronizarNomes, silencioso);
 
-            if (padronizarNomes)
-                arquivosRenomeados = PadronizarNomesArquivos(arquivosGerados, silencioso);
-
-            sw.Stop();
-
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Todos os pacotes gerados com sucesso em {sw.Elapsed.TotalSeconds:N1}s.[/]");
-
-            if (resumo)
-                ExibirResumoMarkdown(arquivosGerados, arquivosRenomeados);
+            ExibirResumo(resultado.ArquivosGerados, resultado.ArquivosRenomeados, resumo);
         }
         catch (Exception ex)
         {
-            sucesso = false;
             _console.MarkupLineInterpolated($"[red][[ERROR]] {ex.Message}[/]");
-            Environment.Exit(1);
-        }
 
-        if (!sucesso)
-            Environment.Exit(1);
+            throw;
+        }
     }
 
-    private void EmpacotarScriptsDireto(string pastaOrigem, string destinoZip, bool silencioso)
+    /// <summary>
+    /// Exibe um resumo dos arquivos gerados e renomeados.
+    /// </summary>
+    /// <param name="arquivosGerados">
+    /// Lista de arquivos gerados.
+    /// </param>
+    /// <param name="renomeados">Lista de arquivos renomeados, com os nomes antigos e novos.</param>
+    /// <param name="resumo">
+    /// Tipo de resumo a ser exibido. Pode ser "nenhum", "console" ou "markdown".
+    /// </param>
+    private void ExibirResumo(IEnumerable<string> arquivosGerados, IEnumerable<(string Antigo, string Novo)> renomeados, string? resumo)
     {
-        var arquivos = _empacotadorScriptsService.ListarArquivosComRelativo(pastaOrigem).ToList();
-
-        if (arquivos.Count == 0)
+        switch (resumo?.ToLowerInvariant())
         {
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[yellow][[WARN]] Nenhum arquivo de script encontrado em: {pastaOrigem}[/]");
+            case "markdown":
+                ExibirResumoMarkdown(arquivosGerados, renomeados);
 
-            return;
+                break;
+            case "console":
+                ExibirResumoConsole(arquivosGerados, renomeados);
+
+                break;
         }
-
-        if (_fileSystem.File.Exists(destinoZip))
-            _fileSystem.File.Delete(destinoZip);
-
-        using var zip = ZipFile.Open(destinoZip, ZipArchiveMode.Create);
-
-        foreach (var (arquivo, relativo) in arquivos)
-            zip.CreateEntryFromFile(arquivo, relativo);
-
-        if (!silencioso)
-            _console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
     }
 
-    private List<(string Antigo, string Novo)> PadronizarNomesArquivos(IEnumerable<string> arquivos, bool silencioso)
+    /// <summary>
+    /// Exibe um resumo dos arquivos gerados e renomeados usando os recursos de formatação do Spectre.Console.
+    /// </summary>
+    /// <param name="arquivosGerados">
+    /// Lista de arquivos gerados.
+    /// </param>
+    /// <param name="renomeados">
+    /// Lista de arquivos renomeados, com os nomes antigos e novos.
+    /// </param>
+    private void ExibirResumoConsole(IEnumerable<string> arquivosGerados, IEnumerable<(string Antigo, string Novo)> renomeados)
     {
-        var regex = RegexPadronizaNomes();
-        var renomeados = new List<(string, string)>();
+        _console.MarkupLine("\n[bold yellow]Resumo dos pacotes gerados[/]\n");
 
-        foreach (var arquivo in arquivos)
+        // Cria um dicionário para mapear arquivos renomeados
+        var renomeadosDict = renomeados.ToDictionary
+        (
+            static x => x.Antigo,
+            static x => x.Novo,
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        // Agrupa arquivos por pasta
+        var arquivosPorPasta = arquivosGerados
+            .GroupBy(static arq => Path.GetDirectoryName(arq)!)
+            .OrderBy(static g => g.Key);
+
+        foreach (var grupo in arquivosPorPasta)
         {
-            var nome = _fileSystem.Path.GetFileName(arquivo);
-            var pasta = _fileSystem.Path.GetDirectoryName(arquivo) ?? string.Empty;
-            var match = regex.Match(nome);
+            var pasta = string.IsNullOrEmpty(grupo.Key)
+                ? "[root]"
+                : Path.GetRelativePath(_fileSystem.Directory.GetCurrentDirectory(), grupo.Key).EscapeMarkup();
 
-            if (!match.Success)
-                continue;
+            var pastaNode = new Tree($"[blue]{pasta.EscapeMarkup()}[/]");
 
-            var parte2 = match.Groups[2].Value;
-            var parte3 = match.Groups[3].Value;
-            var novoNome = $"scripts{parte2}{parte3}.zip";
-            var novoCaminho = _fileSystem.Path.Combine(pasta, novoNome);
+            var table = new Table().RoundedBorder();
+            table.AddColumn(new TableColumn("Arquivo"));
+            table.AddColumn(new TableColumn("Renomeado"));
 
-            try
+            foreach (var arq in grupo)
             {
-                _fileSystem.File.Move(arquivo, novoCaminho, overwrite: true);
+                var nomeOriginal = Path.GetFileName(arq).EscapeMarkup();
+
+                table.AddRow
+                (
+                    $"[white]{nomeOriginal}[/]",
+                    renomeadosDict.TryGetValue(arq, out var novoNome)
+                        ? $"[green]{Path.GetFileName(novoNome).EscapeMarkup()}[/]"
+                        : string.Empty
+                );
             }
-            catch (Exception ex)
-            {
-                _console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao renomear arquivo {arquivo} para {novoCaminho}: {ex.Message}[/]");
 
-                Environment.Exit(1);
-            }
-
-            renomeados.Add((arquivo, novoCaminho));
-
-            if (!silencioso)
-                _console.MarkupLineInterpolated($"[blue][[INFO]] Arquivo renomeado: {nome} » {novoNome}[/]");
+            pastaNode.AddNode(table);
+            _console.Write(pastaNode);
         }
 
-        return renomeados;
+        _console.WriteLine();
     }
 
+    /// <summary>
+    /// Exibe um resumo dos pacotes gerados em formato Markdown.
+    /// </summary>
+    /// <param name="arquivosGerados">
+    /// Lista de arquivos gerados.
+    /// </param>
+    /// <param name="renomeados">
+    /// Lista de arquivos renomeados, com os nomes antigos e novos.
+    /// </param>
     private void ExibirResumoMarkdown(IEnumerable<string> arquivosGerados, IEnumerable<(string Antigo, string Novo)> renomeados)
     {
         _console.WriteLine("\n---");
@@ -250,7 +228,4 @@ public sealed partial class EmpacotarScriptsCommand : Command
 
         _console.WriteLine("\n---");
     }
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"^_scripts(\d{0,2})(\S+)?\.zip$")]
-    private static partial System.Text.RegularExpressions.Regex RegexPadronizaNomes();
 }

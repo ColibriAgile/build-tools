@@ -1,0 +1,64 @@
+name: 'Obter versão'
+description: 'Extrai versão do arquivo ini, com defaults para 0 se chaves estiverem ausentes.'
+
+inputs:
+  caminho-versao-ini:
+    description: 'Caminho para o arquivo versao.ini'
+    required: true
+    
+outputs:
+  versao:
+    description: 'String de versão gerada a partir do versao.ini'
+    value: ${{ steps.ler-versao.outputs.versao }}
+    
+runs:
+  using: 'composite'
+  steps:
+    - name: Ler versao.ini e gerar string de versão
+      id: ler-versao
+      shell: pwsh
+      run: |
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = "Stop"
+
+        $filePath = "${{ inputs.caminho-versao-ini }}"
+        
+        # Interrompe com erro se o arquivo não existe.
+        if (-not (Test-Path $filePath)) {
+          Write-Error "Arquivo de versão não encontrado em: $filePath"
+          exit 1
+        }
+
+        # Filtra linhas vazias e comentários (simples, começando com ; ou #) antes de procurar por '='
+        $lines = Get-Content $filePath | Where-Object { $_.Trim() -ne '' -and $_.Trim() -notmatch '^[;#]' } | Where-Object { $_ -match '=' }
+        
+        $dict = @{}
+        foreach ($line in $lines) {
+          $parts = $line.Trim() -split '=', 2
+          $key = $parts[0].Trim()
+          $value = $parts[1].Trim()
+          # Remover aspas comuns se existirem (opcional, dependendo do seu formato INI)
+          # $value = $value -replace '^["'']|["'']$', ''
+          $dict[$key] = $value
+        }
+
+        # Atribui valores, usando '0' como default se a chave não existir ou o valor for nulo/vazio
+        $major_val = $dict['MajorVersion']
+        $major = if ([string]::IsNullOrEmpty($major_val)) { '0' } else { $major_val }
+
+        $minor_val = $dict['MinorVersion']
+        $minor = if ([string]::IsNullOrEmpty($minor_val)) { '0' } else { $minor_val }
+
+        $release_val = $dict['Release']
+        $release = if ([string]::IsNullOrEmpty($release_val)) { '0' } else { $release_val }
+        
+        $build = "${{ github.run_number }}"
+        
+        $versao = "$major.$minor.$release.$build"
+        
+        echo "versao=$versao" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    
+    - name: Exibir versão gerada
+      shell: pwsh
+      run: |
+        echo "Versão gerada: ${{ steps.ler-versao.outputs.versao }}"

@@ -2,6 +2,7 @@ using BuildTools.Constants;
 using BuildTools.Models;
 using System.Text.Json;
 using System.IO.Abstractions;
+using System.Text.Json.Serialization;
 
 namespace BuildTools.Services;
 
@@ -14,7 +15,7 @@ public sealed class ManifestoService : IManifestoService
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         WriteIndented = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     /// <summary>
@@ -37,8 +38,8 @@ public sealed class ManifestoService : IManifestoService
     {
         var caminhos = new[]
         {
-            _fileSystem.Path.Combine(pasta, MANIFESTO_SERVER),
-            _fileSystem.Path.Combine(pasta, MANIFESTO_LOCAL)
+            Path.Combine(pasta, MANIFESTO_SERVER),
+            Path.Combine(pasta, MANIFESTO_LOCAL)
         };
 
         foreach (var caminho in caminhos)
@@ -57,9 +58,10 @@ public sealed class ManifestoService : IManifestoService
     /// <inheritdoc />
     public void SalvarManifesto(string pasta, Manifesto manifesto)
     {
-        var caminho = _fileSystem.Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
+        var caminho = Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
 
         var json = JsonSerializer.Serialize(manifesto, _jsonSerializerOptions);
+        _fileSystem.Directory.CreateDirectory(pasta);
         _fileSystem.File.WriteAllText(caminho, json);
     }
 }

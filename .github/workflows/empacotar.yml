@@ -1,0 +1,50 @@
+name: Empacotar arquivos
+# Empacotar arquivos com o BuildTools
+
+on:
+  workflow_call:
+    inputs:
+      pasta-origem:
+        required: true
+        type: string
+      pasta-destino:
+        required: true
+        type: string
+      versao:
+        required: true
+        type: string
+      develop:
+        required: true
+        type: string
+      extras:
+        required: false
+        type: string
+
+jobs:
+  empacotar-arquivos:
+    if: github.event_name == 'workflow_call'
+    runs-on: windows-latest
+    steps:
+      - name: Baixar buildTools.exe do GitHub Releases
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: ColibriAgile/BuildTools
+          latest: true
+          fileName: BuildTools.exe
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Executar buildTools.exe (empacotar)
+        shell: pwsh
+        run: |
+          try {
+            .\buildTools.exe empacotar 
+            --pasta "${{ inputs.pasta-origem }}" 
+            --saida "${{ inputs.pasta-destino }}" 
+            --versao "${{ inputs.versao }}" 
+            --develop "${{ inputs.develop }}" 
+            --resumo 
+            ${{ inputs.extras}}
+          } catch {
+            Write-Error "Erro ao executar buildTools.exe: $_"
+            exit 1
+          }

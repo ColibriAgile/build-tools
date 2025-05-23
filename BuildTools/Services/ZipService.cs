@@ -20,7 +20,7 @@ public sealed class ZipService : IZipService
         string pastaOrigem,
         List<string> arquivos,
         string caminhoZip,
-        string senha
+        string? senha
     )
     {
         using var zip = ZipFile.Open
@@ -31,7 +31,7 @@ public sealed class ZipService : IZipService
 
         foreach (var nomeArquivo in arquivos)
         {
-            var caminhoArquivo = _fileSystem.Path.Combine(pastaOrigem, nomeArquivo);
+            var caminhoArquivo = Path.Combine(pastaOrigem, nomeArquivo);
 
             if (!_fileSystem.File.Exists(caminhoArquivo))
             {
@@ -42,6 +42,28 @@ public sealed class ZipService : IZipService
             var entry = zip.CreateEntry(nomeArquivo); // Garante que só o nome do arquivo vai para o zip
             using var entryStream = entry.Open();
             stream.CopyTo(entryStream);
+        }
+    }
+
+    /// <inheritdoc />
+    public void CompactarZip
+    (
+        string pastaOrigem,
+        List<(string caminhoCompleto, string caminhoZip)> arquivos,
+        string caminhoZip,
+        string? senha = null
+    )
+    {
+        using var zip = ZipFile.Open(caminhoZip, ZipArchiveMode.Create);
+
+        foreach (var (arquivo, relativo) in arquivos)
+        {
+            if (!_fileSystem.File.Exists(arquivo))
+            {
+                continue;
+            }
+
+            zip.CreateEntryFromFile(arquivo, relativo);
         }
     }
 }

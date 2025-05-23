@@ -1,62 +1,78 @@
 # Colibri BuildTools
 
+![Build Status](https://github.com/ColibriAgile/BuildTools/actions/workflows/build.yml/badge.svg?branch=master)
+![Testes](https://github.com/ColibriAgile/BuildTools/actions/workflows/testes.yml/badge.svg?branch=master)
+[![codecov](https://codecov.io/gh/ColibriAgile/BuildTools/graph/badge.svg?token=IURQ5VBDSW)](https://codecov.io/gh/ColibriAgile/BuildTools)
+
 ## Índice
 
 - [Funcionalidades](#funcionalidades)
 - [Como usar](#como-usar)
-- [Parâmetros do comando](#parâmetros-do-comando)
+- [Parâmetros dos comandos](#parâmetros-dos-comandos)
 - [Estrutura do Projeto](#estrutura-do-projeto)
-- [Testes](#testes)
 - [Requisitos](#requisitos)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
 
 O Colibri BuildTools é uma ferramenta CLI moderna em C# .NET 9 para empacotamento de arquivos baseada em manifesto, inspirada no script Python `empacotar.py`. O projeto utiliza DI, System.CommandLine, System.IO.Abstractions, Spectre.Console e recursos modernos do C# 12+, com arquitetura modular e testável.
 
 ## Funcionalidades
 
 - Empacotamento de arquivos conforme manifesto (suporte a padrões regex)
+- Empacotamento de scripts SQL em pacotes zip para inclusão em .cmpkg
 - Geração e atualização automática do manifesto
 - Compactação ZIP nativa (System.IO.Compression)
 - Parâmetros avançados de linha de comando
+- Opção de padronização de nomes de arquivos zip
+- Resumo do empacotamento em console ou markdown
 - Estrutura modular e testável
 - Saída colorida e amigável via Spectre.Console
+- Suporte a execução silenciosa e sem cor
 
 ## Como usar
 
+### Empacotar arquivos conforme manifesto
+
 ```sh
-dotnet run --project BuildTools/BuildTools.csproj -- empacotar --pasta <origem> --saida <destino> [--senha <senha>] [--versao <versao>] [--develop]
+BuildTools empacotar --pasta <origem> --saida <destino> [--senha <senha>] [--versao <versao>] [--develop] [--resumo <tipo>] [--silencioso] [--sem-cor]
 ```
 
-## Parâmetros do comando
+### Empacotar scripts SQL em pacotes zip
 
-- `--pasta`, `-p`, `/pasta`: Pasta de origem dos arquivos (**obrigatório**)
-- `--saida`, `-s`, `/saida`: Pasta de saída do pacote (**obrigatório**)
-- `--senha`, `-se`, `/senha`: Senha do ZIP (opcional)
-- `--versao`, `-v`, `/versao`: Versão do pacote (opcional, sobrescreve a do manifesto)
-- `--develop`, `-d`, `/develop`: Marca o pacote como versão de desenvolvimento (gera a chave `develop` no manifesto)
+```sh
+BuildTools empacotar_scripts --pasta <origem> --saida <destino> [--padronizar_nomes <true|false>] [--resumo <tipo>] [--silencioso] [--sem-cor]
+```
+
+## Parâmetros dos comandos
+
+### Comando `empacotar`
+
+- `--pasta`, `-p`: Pasta de origem dos arquivos (**obrigatório**)
+- `--saida`, `-s`: Pasta de saída do pacote (**obrigatório**)
+- `--senha`, `-se`: Senha do ZIP (opcional)
+- `--versao`, `-v`: Versão do pacote (opcional, sobrescreve a do manifesto)
+- `--develop`, `-d`: Marca o pacote como versão de desenvolvimento (gera a chave `develop` no manifesto)
+- `--resumo`: Exibe um resumo ao final do empacotamento. Valores possíveis: `nenhum`, `console`, `markdown` (opcional)
+- `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
+- `--sem-cor`: Executa o comando sem cores (opcional)
+
+### Comando `empacotar_scripts`
+
+- `--pasta`, `-p`: Pasta de origem dos scripts (**obrigatório**)
+- `--saida`, `-s`: Pasta de saída dos pacotes zip (**obrigatório**)
+- `--padronizar_nomes`, `-pn`: Padroniza o nome dos arquivos zip gerados conforme regex (padrão: true)
+- `--resumo`: Exibe um resumo ao final do empacotamento. Valores possíveis: `nenhum`, `console`, `markdown` (opcional)
+- `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
+- `--sem-cor`: Executa o comando sem cores (opcional)
 
 ## Estrutura do Projeto
 
-- `Commands/` - Comandos CLI
+- `Commands/` - Comandos CLI (`empacotar`, `empacotar_scripts`)
 - `Services/` - Serviços de negócio e utilitários
 - `Models/` - Modelos de dados (manifesto, arquivos, etc)
 - `Constants/` - Constantes globais do empacotador
 - `Program.cs` - Bootstrap e configuração DI
-
-## Testes
-
-Recomenda-se criar testes unitários para os serviços e comandos utilizando xUnit, NUnit ou MSTest.
 
 ## Requisitos
 
 - .NET 9 SDK
 - Bibliotecas principais: System.CommandLine, System.IO.Abstractions, Spectre.Console, System.IO.Compression
 
-## Contribuição
-
-Pull requests são bem-vindos! Siga o style guide do projeto e mantenha a arquitetura modular.
-
-## Licença
-
-Este projeto está licenciado sob a licença MIT.

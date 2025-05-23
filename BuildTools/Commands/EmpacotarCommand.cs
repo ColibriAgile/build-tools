@@ -1,9 +1,12 @@
 using System.CommandLine;
+using BuildTools.Models;
 using BuildTools.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 
 namespace BuildTools.Commands;
+
+using System.Diagnostics;
 
 /// <summary>
 /// Comando para empacotar arquivos de uma pasta conforme manifesto.
@@ -12,6 +15,48 @@ public sealed class EmpacotarCommand : Command
 {
     private readonly IEmpacotadorService _empacotadorService;
     private readonly IAnsiConsole _console;
+
+    private readonly Option<string> _pastaOption = new
+    (
+        aliases: ["--pasta", "-p"],
+        description: "Pasta de origem dos arquivos"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<string> _saidaOption = new
+    (
+        aliases: ["--saida", "-s"],
+        description: "Pasta de saída"
+    )
+    {
+        IsRequired = true
+    };
+
+    private readonly Option<string> _senhaOption = new
+    (
+        aliases: ["--senha", "-se"],
+        description: "Senha do pacote zip (opcional)"
+    )
+    {
+        IsRequired = false
+    };
+
+    private readonly Option<string> _versaoOption = new
+    (
+        aliases: ["--versao", "-v"],
+        description: "Versão do pacote (opcional, sobrescreve a do manifesto)"
+    )
+    {
+        IsRequired = false
+    };
+
+    private readonly Option<bool> _developOption = new
+    (
+        aliases: ["--develop", "-d"],
+        description: "Marca o pacote como versão de desenvolvimento (opcional)"
+    );
 
     /// <summary>
     /// Inicializa uma nova instância da classe <see cref="EmpacotarCommand"/>.
@@ -34,58 +79,16 @@ public sealed class EmpacotarCommand : Command
         [FromKeyedServices("semCor")]
         Option<bool> semCorOption,
         [FromKeyedServices("resumo")]
-        Option<bool> resumoOption,
+        Option<string> resumoOption,
         IEmpacotadorService empacotadorService,
         IAnsiConsole console
-    ) : base("empacotar", "Empacota arquivos de uma pasta conforme manifesto.")
+    ) : base("empacotar", "Empacota arquivos de uma pasta para um pacote .cmpkg conforme regras do arquivo manifesto.server.")
     {
-        var pastaOption = new Option<string>
-        (
-            aliases: ["--pasta", "-p"],
-            description: "Pasta de origem dos arquivos"
-        )
-        {
-            IsRequired = true
-        };
-
-        var saidaOption = new Option<string>
-        (
-            aliases: ["--saida", "-s"],
-            description: "Pasta de saída"
-        )
-        {
-            IsRequired = true
-        };
-
-        var senhaOption = new Option<string>
-        (
-            aliases: ["--senha", "-se"],
-            description: "Senha do pacote zip (opcional)"
-        )
-        {
-            IsRequired = false
-        };
-
-        var versaoOption = new Option<string>
-        (
-            aliases: ["--versao", "-v"],
-            description: "Versão do pacote (opcional, sobrescreve a do manifesto)"
-        )
-        {
-            IsRequired = false
-        };
-
-        var developOption = new Option<bool>
-        (
-            aliases: ["--develop", "-d"],
-            description: "Marca o pacote como versão de desenvolvimento (opcional)"
-        );
-
-        AddOption(pastaOption);
-        AddOption(saidaOption);
-        AddOption(senhaOption);
-        AddOption(versaoOption);
-        AddOption(developOption);
+        AddOption(_pastaOption);
+        AddOption(_saidaOption);
+        AddOption(_senhaOption);
+        AddOption(_versaoOption);
+        AddOption(_developOption);
 
         _empacotadorService = empacotadorService;
         _console = console;
@@ -93,11 +96,11 @@ public sealed class EmpacotarCommand : Command
         this.SetHandler
         (
             Handle,
-            pastaOption,
-            saidaOption,
-            senhaOption,
-            versaoOption,
-            developOption,
+            _pastaOption,
+            _saidaOption,
+            _senhaOption,
+            _versaoOption,
+            _developOption,
             silenciosoOption,
             semCorOption,
             resumoOption
@@ -124,42 +127,106 @@ public sealed class EmpacotarCommand : Command
         bool develop,
         bool silencioso,
         bool semCor,
-        bool resumo
+        string resumo
     )
     {
         if (semCor)
             AnsiConsole.Profile.Capabilities.Ansi = false;
 
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        var sucesso = true;
+        var sw = Stopwatch.StartNew();
 
         try
         {
             if (!silencioso)
                 _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
 
-            string caminhoPacote = _empacotadorService.Empacotar(pasta, saida, senha, versao, develop);
+            var resultado = _empacotadorService.Empacotar(pasta, saida, senha, versao, develop);
             sw.Stop();
 
             if (!silencioso)
-                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{caminhoPacote}[/]");
+                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Empacotamento concluído em {sw.Elapsed.TotalSeconds:N1}s! Pacote gerado em: [/] [blue]{resultado.CaminhoPacote}[/]");
 
-            if (resumo)
-            {
-                _console.WriteLine("\n---");
-                _console.WriteLine("## Resumo do empacotamento\n");
-                _console.WriteLine($"- Pacote gerado: `{caminhoPacote}`");
-                _console.WriteLine("\n---");
-            }
+            ExibirResumo(resultado, resumo);
         }
         catch (Exception ex)
         {
-            sucesso = false;
             _console.MarkupLineInterpolated($"[red][[ERROR]] {ex.Message}[/]");
-            Environment.Exit(1);
-        }
 
-        if (!sucesso)
-            Environment.Exit(1);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Exibe o resumo do empacotamento de acordo com a opção especificada.
+    /// Se a opção for "nenhum", não exibe nada.
+    /// </summary>
+    /// <param name="resultado">
+    /// Resultado do empacotamento, incluindo caminho do pacote e arquivos incluídos.
+    /// </param>
+    /// <param name="resumo">
+    /// Tipo de resumo a ser exibido. Pode ser "nenhum", "console" ou "markdown".
+    /// </param>
+    private void ExibirResumo(EmpacotamentoResultado resultado, string? resumo)
+    {
+        switch (resumo?.ToLowerInvariant())
+        {
+            case "console":
+                ExibirResumoConsole(resultado);
+
+                break;
+            case "markdown":
+                ExibirResumoMarkdown(resultado);
+
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Exibe o resumo do empacotamento no console usando os recursos de formatação de AnsiConsole do Spectre.Console.
+    /// </summary>
+    /// <param name="resultado">
+    /// Resultado do empacotamento, incluindo caminho do pacote e arquivos incluídos.
+    /// </param>
+    private void ExibirResumoConsole(EmpacotamentoResultado resultado)
+    {
+        _console.MarkupLine("[blue]Resumo do Empacotamento[/]");
+        _console.MarkupLine($"[grey]Pasta do pacote gerado:[/] [blue]{Path.GetDirectoryName(resultado.CaminhoPacote).EscapeMarkup()}[/]");
+        _console.WriteLine();
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Pacote Gerado")
+            .AddColumn("Arquivos Incluídos");
+
+        var nomePacote = Path.GetFileName(resultado.CaminhoPacote);
+        var arquivos = string.Join("\n", resultado.ArquivosIncluidos.Select(static a => $"[grey]{Path.GetFileName(a).EscapeMarkup()}[/]"));
+
+        table.AddRow
+        (
+            $"[blue]{nomePacote.EscapeMarkup()}[/]",
+            arquivos
+        );
+
+        _console.Write(table);
+        _console.WriteLine();
+    }
+
+    /// <summary>
+    /// Exibe o resumo do empacotamento em formato Markdown.
+    /// </summary>
+    /// <param name="resultado">
+    /// Resultado do empacotamento, incluindo caminho do pacote e arquivos incluídos.
+    /// </param>
+    private void ExibirResumoMarkdown(EmpacotamentoResultado resultado)
+    {
+        _console.WriteLine("\n---");
+        _console.WriteLine("## Resumo do empacotamento\n");
+        _console.WriteLine($"- Pacote gerado: `{resultado.CaminhoPacote}`");
+        _console.WriteLine("\n### Arquivos incluídos no pacote:");
+
+        foreach (var arq in resultado.ArquivosIncluidos)
+            _console.WriteLine($"- `{arq}`");
+
+        _console.WriteLine("\n---");
     }
 }
