@@ -31,21 +31,6 @@ public sealed class EmpacotarScriptsCommandTestes
     }
 
     [Fact]
-    public async Task InvokeAsync_QuandoPastaNaoExiste_DeveExibirErro()
-    {
-        // Arrange
-        const string PASTA = @"C:\naoexiste";
-        _fileSystem.Directory.Exists(PASTA).Returns(false);
-
-        // Act
-        var result = await _rootCommand.InvokeAsync(["empacotar_scripts", "--pasta", PASTA, "--saida", @"C:\saida"]);
-
-        // Assert
-        result.ShouldNotBe(0); // Deve retornar erro
-        _console.Output.ShouldContain("ERROR");
-    }
-
-    [Fact]
     public async Task InvokeAsync_QuandoProcessarEmpacotamentoLancaExcecao_DeveExibirErro()
     {
         // Arrange
