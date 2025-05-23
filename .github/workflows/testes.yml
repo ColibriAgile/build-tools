@@ -59,7 +59,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: ColibriAgile/BuildTools
+        slug: ColibriAgile/build-tools
         directory: './BuildTools.Testes/TestResults/'
         fail_ci_if_error: true
         files: ./BuildTools.Testes/TestResults/**/coverage.cobertura.xml
