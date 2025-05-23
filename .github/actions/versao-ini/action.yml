@@ -1,5 +1,5 @@
 name: 'Obter versão'
-description: 'Extrai versão do arquivo ini'
+description: 'Extrai versão do arquivo ini, com defaults para 0 se chaves estiverem ausentes.'
 
 inputs:
   caminho-versao-ini:
@@ -18,19 +18,44 @@ runs:
       id: ler-versao
       shell: pwsh
       run: |
-        $ini = Get-Content "${{ inputs.caminho-versao-ini }}" | Where-Object { $_ -match '=' }
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = "Stop"
+
+        $filePath = "${{ inputs.caminho-versao-ini }}"
+        
+        # Interrompe com erro se o arquivo não existe.
+        if (-not (Test-Path $filePath)) {
+          Write-Error "Arquivo de versão não encontrado em: $filePath"
+          exit 1
+        }
+
+        # Filtra linhas vazias e comentários (simples, começando com ; ou #) antes de procurar por '='
+        $lines = Get-Content $filePath | Where-Object { $_.Trim() -ne '' -and $_.Trim() -notmatch '^[;#]' } | Where-Object { $_ -match '=' }
+        
         $dict = @{}
-        foreach ($line in $ini) {
-          $parts = $line -split '=', 2
+        foreach ($line in $lines) {
+          $parts = $line.Trim() -split '=', 2
           $key = $parts[0].Trim()
           $value = $parts[1].Trim()
+          # Remover aspas comuns se existirem (opcional, dependendo do seu formato INI)
+          # $value = $value -replace '^["'']|["'']$', ''
           $dict[$key] = $value
         }
-        $major = $dict['MajorVersion']
-        $minor = $dict['MinorVersion']
-        $release = $dict['Release']
+
+        # Atribui valores, usando '0' como default se a chave não existir ou o valor for nulo/vazio
+        $major_val = $dict['MajorVersion']
+        $major = if ([string]::IsNullOrEmpty($major_val)) { '0' } else { $major_val }
+
+        $minor_val = $dict['MinorVersion']
+        $minor = if ([string]::IsNullOrEmpty($minor_val)) { '0' } else { $minor_val }
+
+        $release_val = $dict['Release']
+        $release = if ([string]::IsNullOrEmpty($release_val)) { '0' } else { $release_val }
+        
         $build = "${{ github.run_number }}"
+        
         $versao = "$major.$minor.$release.$build"
+        
         echo "versao=$versao" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     
     - name: Exibir versão gerada
