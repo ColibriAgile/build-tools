@@ -41,20 +41,6 @@ jobs:
         name: code-coverage
         path: '**/TestResults/**/coverage.cobertura.xml'
 
-    - name: Generate badge
-      uses: danielpalme/ReportGenerator-GitHub-Action@v5.4.7
-      with:
-        reports: '**/TestResults/**/coverage.cobertura.xml'
-        targetdir: 'coveragereport'
-        reporttypes: 'Badges;Html'
-
-    - name: Publish badge
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-badge
-        path: coveragereport/badge.svg
-
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       with:
