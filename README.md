@@ -3,7 +3,7 @@
 [![Build master](https://github.com/ColibriAgile/build-tools/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/ColibriAgile/build-tools/actions/workflows/build.yml)
 [![Build production](https://github.com/ColibriAgile/build-tools/actions/workflows/build-production.yml/badge.svg)](https://github.com/ColibriAgile/build-tools/actions/workflows/build-production.yml)
 [![Testes](https://github.com/ColibriAgile/build-tools/actions/workflows/testes.yml/badge.svg?branch=master)](https://github.com/ColibriAgile/build-tools/actions/workflows/testes.yml)
-[![codecov](https://codecov.io/gh/ColibriAgile/build-tools/graph/badge.svg?token=IURQ5VBDSW)](https://codecov.io/gh/ColibriAgile/build-tools)
+[![codecov](https://codecov.io/gh/ColibriAgile/build-tools/graph/badge.svg?token=MKMMKLHHCS)](https://codecov.io/gh/ColibriAgile/build-tools)
 
 ## Índice
 
