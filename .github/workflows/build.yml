@@ -1,6 +1,7 @@
-name: Build e Versão
+name: Build master
 
 on:
+  workflow_dispatch:  
   push:
     branches: [ master ]
     tags: [ '*' ]

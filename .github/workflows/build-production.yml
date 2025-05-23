@@ -1,6 +1,7 @@
 name: Build production
 
 on:
+  workflow_dispatch:  
   pull_request:
     types: [closed]
     branches: [production]
