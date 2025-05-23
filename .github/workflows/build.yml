@@ -1,4 +1,4 @@
-name: Build e Versão
+name: Build master
 
 on:
   push:
