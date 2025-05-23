@@ -1,5 +1,4 @@
 name: Build production
-
 on:
   workflow_dispatch:  
   pull_request:
@@ -8,36 +7,36 @@ on:
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-
+          
       - name: Restore dependencies
         run: dotnet restore BuildTools/BuildTools.csproj
-
+        
       - name: Build
         run: dotnet build BuildTools/BuildTools.csproj --configuration Release
-
+        
       - name: Publish win-x64
         run: |
-          dotnet publish BuildTools/BuildTools.csproj \
-            -c Release \
-            -r win-x64 \
-            --self-contained true \
+          dotnet publish BuildTools/BuildTools.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
             -o C:\BuildTools
-
+            
       - name: List C:\BuildTools
         if: success()
         run: dir C:\BuildTools
-
+        
       - name: Upload buildTools.exe artifact
         if: success()
         uses: actions/upload-artifact@v4
@@ -46,7 +45,15 @@ jobs:
           path: C:\BuildTools\BuildTools.exe
           if-no-files-found: error
           retention-days: 2
-
+          
+      - name: Delete existing release
+        if: success()
+        continue-on-error: true
+        run: |
+          gh release delete latest-production --yes || echo "Release não existe"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Publicar no GitHub Releases
         if: success()
         uses: softprops/action-gh-release@v2
@@ -55,6 +62,9 @@ jobs:
           name: BuildTools (produção)
           body: |
             Release automático do BuildTools gerado a partir do branch production.
+            
+            **Commit:** ${{ github.sha }}
+            **Executado em:** ${{ github.run_id }}
           files: C:\BuildTools\BuildTools.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
