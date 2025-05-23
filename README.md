@@ -1,6 +1,7 @@
 # Colibri BuildTools
 
-![Build Status](https://github.com/ColibriAgile/BuildTools/actions/workflows/build.yml/badge.svg?branch=master)
+![Build master](https://github.com/ColibriAgile/BuildTools/actions/workflows/build.yml/badge.svg?branch=master)
+[![Build production](https://github.com/ColibriAgile/build-tools/actions/workflows/build-production.yml/badge.svg)](https://github.com/ColibriAgile/build-tools/actions/workflows/build-production.yml)
 ![Testes](https://github.com/ColibriAgile/BuildTools/actions/workflows/testes.yml/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/ColibriAgile/BuildTools/graph/badge.svg?token=IURQ5VBDSW)](https://codecov.io/gh/ColibriAgile/BuildTools)
 
