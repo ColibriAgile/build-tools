@@ -150,51 +150,7 @@ public sealed class EmpacotarCommandTestes
         // Assert
         result.ShouldBe(0);
         _console.Output.ShouldContain("SUCCESS");
-    }
-
-    [Fact]
-    public void ExibirResumoConsole_DeveExibirTabelaComPacoteENomesDosArquivos()
-    {
-        // Arrange
-        var console = new TestConsole();
-        var empacotadorService = Substitute.For<IEmpacotadorService>();
-        var cmd = new EmpacotarCommand(_silenciosoOption, _semCorOption, _resumoOption, empacotadorService, console);
-        var resultado = new EmpacotamentoResultado(@"C:\saida\pacote.cmpkg", ["manifesto.dat", "arquivo1.txt", "dados.csv"]);
-
-        // Act
-        var metodo = cmd.GetType().GetMethod("ExibirResumoConsole", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        metodo!.Invoke(cmd, [resultado]);
-
-        // Assert
-        var output = console.Output;
-        output.ShouldContain("Resumo do Empacotamento");
-        output.ShouldContain("Pacote Gerado");
-        output.ShouldContain("Arquivos Incluídos");
-        output.ShouldContain("pacote.cmpkg");
-        output.ShouldContain("manifesto.dat");
-        output.ShouldContain("arquivo1.txt");
-        output.ShouldContain("dados.csv");
-    }
-
-    [Fact]
-    public void ExibirResumoConsole_DeveExibirTabelaMesmoSemArquivosIncluidos()
-    {
-        // Arrange
-        var console = new TestConsole();
-        var empacotadorService = Substitute.For<IEmpacotadorService>();
-        var cmd = new EmpacotarCommand(_silenciosoOption, _semCorOption, _resumoOption, empacotadorService, console);
-        var resultado = new EmpacotamentoResultado(@"C:\saida\pacote.cmpkg", []);
-
-        // Act
-        var metodo = cmd.GetType().GetMethod("ExibirResumoConsole", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        metodo!.Invoke(cmd, [resultado]);
-
-        // Assert
-        var output = console.Output;
-        output.ShouldContain("Resumo do Empacotamento");
-        output.ShouldContain("Pacote Gerado");
-        output.ShouldContain("Arquivos Incluídos");
-        output.ShouldContain("pacote.cmpkg");
+        _console.Profile.Capabilities.Ansi.ShouldBeFalse();
     }
 
     [Fact]

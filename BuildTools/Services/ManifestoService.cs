@@ -9,8 +9,11 @@ namespace BuildTools.Services;
 /// <summary>
 /// Implementação do serviço de manipulação de manifestos de empacotamento.
 /// </summary>
+/// <param name="fileSystem">
+/// Abstração do sistema de arquivos.
+/// </param>
 /// <inheritdoc cref="IManifestoService"/>
-public sealed class ManifestoService : IManifestoService
+public sealed class ManifestoService(IFileSystem fileSystem) : IManifestoService
 {
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
@@ -28,11 +31,6 @@ public sealed class ManifestoService : IManifestoService
     /// </summary>
     private const string MANIFESTO_LOCAL = "manifesto.local";
 
-    private readonly IFileSystem _fileSystem;
-
-    public ManifestoService(IFileSystem fileSystem)
-        => _fileSystem = fileSystem;
-
     /// <inheritdoc />
     public Manifesto LerManifesto(string pasta)
     {
@@ -44,10 +42,10 @@ public sealed class ManifestoService : IManifestoService
 
         foreach (var caminho in caminhos)
         {
-            if (!_fileSystem.File.Exists(caminho))
+            if (!fileSystem.File.Exists(caminho))
                 continue;
 
-            var json = _fileSystem.File.ReadAllText(caminho);
+            var json = fileSystem.File.ReadAllText(caminho);
 
             return JsonSerializer.Deserialize<Manifesto>(json) ?? throw new InvalidOperationException($"Manifesto inválido: {caminho}");
         }
@@ -61,7 +59,7 @@ public sealed class ManifestoService : IManifestoService
         var caminho = Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
 
         var json = JsonSerializer.Serialize(manifesto, _jsonSerializerOptions);
-        _fileSystem.Directory.CreateDirectory(pasta);
-        _fileSystem.File.WriteAllText(caminho, json);
+        fileSystem.Directory.CreateDirectory(pasta);
+        fileSystem.File.WriteAllText(caminho, json);
     }
 }

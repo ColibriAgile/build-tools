@@ -3,6 +3,8 @@ using System.IO.Abstractions;
 using Spectre.Console;
 using BuildTools.Services;
 using Microsoft.Extensions.DependencyInjection;
+using BuildTools.Models;
+using BuildTools.Resumos;
 
 namespace BuildTools.Commands;
 
@@ -101,11 +103,11 @@ public sealed class EmpacotarScriptsCommand : Command
         try
         {
             if (semCor)
-                AnsiConsole.Profile.Capabilities.Ansi = false;
+                _console.Profile.Capabilities.Ansi = false;
 
             var resultado = _empacotadorScriptsService.Empacotar(pasta, saida, padronizarNomes, silencioso);
 
-            ExibirResumo(resultado.ArquivosGerados, resultado.ArquivosRenomeados, resumo);
+            ExibirResumo(resultado, resumo);
         }
         catch (Exception ex)
         {
@@ -125,107 +127,18 @@ public sealed class EmpacotarScriptsCommand : Command
     /// <param name="resumo">
     /// Tipo de resumo a ser exibido. Pode ser "nenhum", "console" ou "markdown".
     /// </param>
-    private void ExibirResumo(IEnumerable<string> arquivosGerados, IEnumerable<(string Antigo, string Novo)> renomeados, string? resumo)
+    private void ExibirResumo(EmpacotamentoScriptResultado resultado, string? resumo)
     {
         switch (resumo?.ToLowerInvariant())
         {
             case "markdown":
-                ExibirResumoMarkdown(arquivosGerados, renomeados);
+                new ResumoScriptsMarkdown(_console, resultado).ExibirRelatorio();
 
                 break;
             case "console":
-                ExibirResumoConsole(arquivosGerados, renomeados);
+                new ResumoScriptsConsole(_console, _fileSystem, resultado).ExibirRelatorio();
 
                 break;
         }
-    }
-
-    /// <summary>
-    /// Exibe um resumo dos arquivos gerados e renomeados usando os recursos de formatação do Spectre.Console.
-    /// </summary>
-    /// <param name="arquivosGerados">
-    /// Lista de arquivos gerados.
-    /// </param>
-    /// <param name="renomeados">
-    /// Lista de arquivos renomeados, com os nomes antigos e novos.
-    /// </param>
-    private void ExibirResumoConsole(IEnumerable<string> arquivosGerados, IEnumerable<(string Antigo, string Novo)> renomeados)
-    {
-        _console.MarkupLine("\n[bold yellow]Resumo dos pacotes gerados[/]\n");
-
-        // Cria um dicionário para mapear arquivos renomeados
-        var renomeadosDict = renomeados.ToDictionary
-        (
-            static x => x.Antigo,
-            static x => x.Novo,
-            StringComparer.OrdinalIgnoreCase
-        );
-
-        // Agrupa arquivos por pasta
-        var arquivosPorPasta = arquivosGerados
-            .GroupBy(static arq => Path.GetDirectoryName(arq)!)
-            .OrderBy(static g => g.Key);
-
-        foreach (var grupo in arquivosPorPasta)
-        {
-            var pasta = string.IsNullOrEmpty(grupo.Key)
-                ? "[root]"
-                : Path.GetRelativePath(_fileSystem.Directory.GetCurrentDirectory(), grupo.Key).EscapeMarkup();
-
-            var pastaNode = new Tree($"[blue]{pasta.EscapeMarkup()}[/]");
-
-            var table = new Table().RoundedBorder();
-            table.AddColumn(new TableColumn("Arquivo"));
-            table.AddColumn(new TableColumn("Renomeado"));
-
-            foreach (var arq in grupo)
-            {
-                var nomeOriginal = Path.GetFileName(arq).EscapeMarkup();
-
-                table.AddRow
-                (
-                    $"[white]{nomeOriginal}[/]",
-                    renomeadosDict.TryGetValue(arq, out var novoNome)
-                        ? $"[green]{Path.GetFileName(novoNome).EscapeMarkup()}[/]"
-                        : string.Empty
-                );
-            }
-
-            pastaNode.AddNode(table);
-            _console.Write(pastaNode);
-        }
-
-        _console.WriteLine();
-    }
-
-    /// <summary>
-    /// Exibe um resumo dos pacotes gerados em formato Markdown.
-    /// </summary>
-    /// <param name="arquivosGerados">
-    /// Lista de arquivos gerados.
-    /// </param>
-    /// <param name="renomeados">
-    /// Lista de arquivos renomeados, com os nomes antigos e novos.
-    /// </param>
-    private void ExibirResumoMarkdown(IEnumerable<string> arquivosGerados, IEnumerable<(string Antigo, string Novo)> renomeados)
-    {
-        _console.WriteLine("\n---");
-        _console.WriteLine("## Resumo dos pacotes gerados\n");
-        _console.WriteLine("### Arquivos gerados:");
-
-        foreach (var arq in arquivosGerados)
-            _console.WriteLine($"- `{arq}`");
-
-        var listaArquivosRenomeados = renomeados.ToList();
-
-        if (listaArquivosRenomeados.Count != 0)
-        {
-            _console.WriteLine("\n### Arquivos renomeados:");
-
-            foreach (var (antigo, novo) in listaArquivosRenomeados)
-                _console.WriteLine($"- `{antigo}` » `{novo}`");
-        }
-
-        _console.WriteLine("\n---");
     }
 }

@@ -15,7 +15,12 @@ public sealed class ArquivoService : IArquivoService
     public ArquivoService(IFileSystem fileSystem, IAnsiConsole console)
         => _fileSystem = fileSystem;
 
-    public void ExcluirComPrefixo(string pasta, string prefixo, string extensao = EmpacotadorConstantes.EXTENSAO_PACOTE)
+    public void ExcluirComPrefixo
+    (
+        string pasta,
+        string prefixo,
+        string extensao = EmpacotadorConstantes.EXTENSAO_PACOTE
+    )
     {
         var arquivos = _fileSystem.Directory.GetFiles(pasta, $"{prefixo}*{extensao}");
 

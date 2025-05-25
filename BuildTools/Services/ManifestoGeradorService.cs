@@ -7,17 +7,15 @@ namespace BuildTools.Services;
 /// <summary>
 /// Implementação do serviço responsável por gerar o manifesto expandido (manifesto.dat).
 /// </summary>
-public sealed class ManifestoGeradorService : IManifestoGeradorService
+/// <param name="fileSystem">Sistema de arquivos.</param>
+/// <inheritdoc cref="IManifestoGeradorService"/>
+public sealed class ManifestoGeradorService(IFileSystem fileSystem) : IManifestoGeradorService
 {
-    private readonly IFileSystem _fileSystem;
-
-    public ManifestoGeradorService(IFileSystem fileSystem)
-        => _fileSystem = fileSystem;
 
     /// <inheritdoc />
     public Manifesto GerarManifestoExpandido(string pasta, Manifesto manifestoOriginal)
     {
-        var arquivosDiretorio = _fileSystem.Directory.GetFiles(pasta)
+        var arquivosDiretorio = fileSystem.Directory.GetFiles(pasta)
             .Select(Path.GetFileName)
             .Where(static nome => !string.IsNullOrWhiteSpace(nome))
             .ToList();
@@ -49,6 +47,23 @@ public sealed class ManifestoGeradorService : IManifestoGeradorService
         };
     }
 
+    /// <summary>
+    /// Adiciona arquivos ao manifesto com base no pattern definido no manifesto original.
+    /// Se o pattern não for encontrado, lança uma exceção.
+    /// </summary>
+    /// <param name="manifestoOriginal">
+    /// Manifesto original a ser expandido.
+    /// </param>
+    /// <param name="arquivosDiretorio">
+    /// Lista de arquivos presentes no diretório.
+    /// </param>
+    /// <param name="arquivosJaAssociados">
+    /// Conjunto de arquivos já associados ao manifesto.
+    /// </param>
+    /// <param name="arquivosManifesto">
+    /// Lista de arquivos do manifesto.
+    /// </param>
+    /// <exception cref="InvalidOperationException"></exception>
     private static void AdicionarArquivosPeloPattern
     (
         Manifesto manifestoOriginal,
@@ -57,12 +72,10 @@ public sealed class ManifestoGeradorService : IManifestoGeradorService
         List<ManifestoArquivo> arquivosManifesto
     )
     {
-        foreach (var previsto in manifestoOriginal.Arquivos)
+        foreach (var previsto in manifestoOriginal.Arquivos
+            .Where(static previsto => !string.IsNullOrEmpty(previsto.PatternNome)))
         {
-            if (string.IsNullOrEmpty(previsto.PatternNome))
-                continue;
-
-            var regex = new Regex(previsto.PatternNome, RegexOptions.IgnoreCase);
+            var regex = new Regex(previsto.PatternNome!, RegexOptions.IgnoreCase);
 
             var encontrados = arquivosDiretorio
                 .Where(arq => !arquivosJaAssociados.Contains(arq!))
@@ -90,6 +103,23 @@ public sealed class ManifestoGeradorService : IManifestoGeradorService
         }
     }
 
+    /// <summary>
+    /// Adiciona arquivos ao manifesto com base no nome definido no manifesto original.
+    /// Se o arquivo não for encontrado, lança uma exceção.
+    /// </summary>
+    /// <param name="manifestoOriginal">
+    /// Manifesto original a ser expandido.
+    /// </param>
+    /// <param name="arquivosDiretorio">
+    /// Lista de arquivos presentes no diretório.
+    /// </param>
+    /// <param name="arquivosJaAssociados">
+    /// Conjunto de arquivos já associados ao manifesto.
+    /// </param>
+    /// <param name="arquivosManifesto">
+    /// Lista de arquivos do manifesto.
+    /// </param>
+    /// <exception cref="InvalidOperationException"></exception>
     private static void AdicionarArquivosPeloNome
     (
         Manifesto manifestoOriginal,
@@ -98,7 +128,8 @@ public sealed class ManifestoGeradorService : IManifestoGeradorService
         List<ManifestoArquivo> arquivosManifesto
     )
     {
-        foreach (var previsto in manifestoOriginal.Arquivos.Where(static previsto => !string.IsNullOrEmpty(previsto.Nome)))
+        foreach (var previsto in manifestoOriginal.Arquivos
+            .Where(static previsto => !string.IsNullOrEmpty(previsto.Nome)))
         {
             var nomePrevisto = previsto.Nome!;
 

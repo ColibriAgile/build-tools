@@ -1,5 +1,7 @@
 name: Empacotar scripts
 # Empacotar scripts com o BuildTools
+description: >-
+  Empacota scripts utilizando o BuildTools. Baixa automaticamente a versão mais recente do BuildTools.exe do repositório ColibriAgile/build-tools e executa o empacotamento de scripts, recebendo como parâmetros a pasta de origem, a pasta de destino e opções extras. Ideal para automatizar o empacotamento de scripts em pipelines CI/CD.
 
 on:
   workflow_call:
@@ -22,7 +24,7 @@ jobs:
       - name: Baixar buildTools.exe do GitHub Releases
         uses: robinraju/release-downloader@v1
         with:
-          repository: ColibriAgile/BuildTools
+          repository: ColibriAgile/build-tools
           latest: true
           fileName: BuildTools.exe
           token: ${{ secrets.GITHUB_TOKEN }}

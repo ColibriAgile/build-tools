@@ -6,13 +6,12 @@ namespace BuildTools.Services;
 /// <summary>
 /// Implementação padrão de IZipService usando System.IO.Compression.
 /// </summary>
+/// <param name="fileSystem">
+/// Abstração do sistema de arquivos.
+/// </param>
 /// <inheritdoc cref="IZipService"/>
-public sealed class ZipService : IZipService
+public sealed class ZipService(IFileSystem fileSystem) : IZipService
 {
-    private readonly IFileSystem _fileSystem;
-
-    public ZipService(IFileSystem fileSystem)
-        => _fileSystem = fileSystem;
 
     /// <inheritdoc />
     public void CompactarZip
@@ -29,16 +28,11 @@ public sealed class ZipService : IZipService
             ZipArchiveMode.Create
         );
 
-        foreach (var nomeArquivo in arquivos)
+        foreach (var (caminhoArquivo, nomeArquivo) in arquivos           
+            .Select(arq => (Path.Combine(pastaOrigem, arq), arq))
+            .Where(x => fileSystem.File.Exists(x.Item1)))
         {
-            var caminhoArquivo = Path.Combine(pastaOrigem, nomeArquivo);
-
-            if (!_fileSystem.File.Exists(caminhoArquivo))
-            {
-                continue;
-            }
-
-            using var stream = _fileSystem.File.OpenRead(caminhoArquivo);
+            using var stream = fileSystem.File.OpenRead(caminhoArquivo);
             var entry = zip.CreateEntry(nomeArquivo); // Garante que só o nome do arquivo vai para o zip
             using var entryStream = entry.Open();
             stream.CopyTo(entryStream);
@@ -56,14 +50,10 @@ public sealed class ZipService : IZipService
     {
         using var zip = ZipFile.Open(caminhoZip, ZipArchiveMode.Create);
 
-        foreach (var (arquivo, relativo) in arquivos)
+        foreach (var (caminhoCompleto, caminhoRelativo) in arquivos
+            .Where(x => fileSystem.File.Exists(x.caminhoCompleto)))
         {
-            if (!_fileSystem.File.Exists(arquivo))
-            {
-                continue;
-            }
-
-            zip.CreateEntryFromFile(arquivo, relativo);
+            zip.CreateEntryFromFile(caminhoCompleto, caminhoRelativo);
         }
     }
 }
