@@ -50,18 +50,18 @@ jobs:
         if: success()
         continue-on-error: true
         run: |
-          gh release delete latest-production --yes || echo "Release não existe"
+          gh release delete latest-production --yes || echo "Release doesn't exist"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Publicar no GitHub Releases
+      - name: Publish release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-production
           name: BuildTools (produção)
           body: |
-            Release automático do BuildTools gerado a partir do branch production.
+            Release gerado a partir do branch production.
             
             **Commit:** ${{ github.sha }}
             **Executado em:** ${{ github.run_id }}
