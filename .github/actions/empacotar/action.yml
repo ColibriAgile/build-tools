@@ -1,0 +1,47 @@
+name: Empacotar arquivos
+description: >-
+  Empacota arquivos utilizando o BuildTools. Baixa automaticamente a versão mais recente do BuildTools.exe do repositório ColibriAgile/build-tools e executa o empacotamento de arquivos, recebendo como parâmetros a pasta de origem, a pasta de destino, versão, develop e opções extras. Ideal para automatizar o empacotamento de arquivos em pipelines CI/CD.
+
+inputs:
+  pasta-origem:
+    description: Caminho da pasta de origem dos arquivos a serem empacotados
+    required: true
+  pasta-destino:
+    description: Caminho da pasta de destino dos arquivos empacotados
+    required: true
+  versao:
+    description: Versão do pacote a ser empacotado
+    required: true
+  develop:
+    description: Indica se é ambiente de desenvolvimento (true/false)
+    required: true
+  extras:
+    description: Parâmetros extras para o BuildTools (opcional)
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Baixar buildTools.exe do GitHub Releases
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: ColibriAgile/build-tools
+        latest: true
+        fileName: BuildTools.exe
+        token: ${{ github.token }}
+
+    - name: Executar buildTools.exe (empacotar)
+      shell: pwsh
+      run: |
+        try {
+          .\BuildTools.exe empacotar \
+            --pasta "${{ inputs.pasta-origem }}" \
+            --saida "${{ inputs.pasta-destino }}" \
+            --versao "${{ inputs.versao }}" \
+            --develop "${{ inputs.develop }}" \
+            --resumo \
+            ${{ inputs.extras }}
+        } catch {
+          Write-Error "Erro ao executar BuildTools.exe: $_"
+          exit 1
+        }
