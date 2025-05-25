@@ -39,7 +39,7 @@ runs:
             --saida "${{ inputs.pasta-destino }}" `
             --versao "${{ inputs.versao }}" `
             --develop "${{ inputs.develop }}" `
-            --resumo console `
+            --resumo markdown `
             ${{ inputs.extras }}
         } catch {
           Write-Error "Erro ao executar BuildTools.exe: $_"

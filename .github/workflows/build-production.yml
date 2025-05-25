@@ -37,15 +37,6 @@ jobs:
         if: success()
         run: dir C:\BuildTools
         
-      - name: Upload buildTools.exe artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: buildTools-exe
-          path: C:\BuildTools\BuildTools.exe
-          if-no-files-found: error
-          retention-days: 2
-          
       - name: Delete existing release
         if: success()
         continue-on-error: true
