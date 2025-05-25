@@ -34,12 +34,12 @@ runs:
       shell: pwsh
       run: |
         try {
-          .\BuildTools.exe empacotar \
-            --pasta "${{ inputs.pasta-origem }}" \
-            --saida "${{ inputs.pasta-destino }}" \
-            --versao "${{ inputs.versao }}" \
-            --develop "${{ inputs.develop }}" \
-            --resumo \
+          .\BuildTools.exe empacotar `
+            --pasta "${{ inputs.pasta-origem }}" `
+            --saida "${{ inputs.pasta-destino }}" `
+            --versao "${{ inputs.versao }}" `
+            --develop "${{ inputs.develop }}" `
+            --resumo `
             ${{ inputs.extras }}
         } catch {
           Write-Error "Erro ao executar BuildTools.exe: $_"
