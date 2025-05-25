@@ -132,7 +132,7 @@ public sealed class EmpacotarCommand : Command
     )
     {
         if (semCor)
-            AnsiConsole.Profile.Capabilities.Ansi = false;
+            _console.Profile.Capabilities.Ansi = false;
 
         var sw = Stopwatch.StartNew();
 

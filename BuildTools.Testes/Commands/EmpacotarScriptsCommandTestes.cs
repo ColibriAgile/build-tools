@@ -166,6 +166,6 @@ public sealed class EmpacotarScriptsCommandTestes
 
         // Assert
         result.ShouldBe(0);
-        AnsiConsole.Profile.Capabilities.Ansi.ShouldBeFalse();
+        _console.Profile.Capabilities.Ansi.ShouldBeFalse();
     }
 }

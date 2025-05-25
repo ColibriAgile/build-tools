@@ -18,7 +18,7 @@ public sealed class ResumoCmpkgConsole(IAnsiConsole console, EmpacotamentoResult
     public void ExibirRelatorio()
     {
         console.MarkupLine("[blue]Resumo do Empacotamento[/]");
-        console.MarkupLine($"[grey]Pasta do pacote gerado:[/] [blue]{Path.GetDirectoryName(resultado.CaminhoPacote).EscapeMarkup()}[/]");
+        console.MarkupLineInterpolated($"[grey]Pasta do pacote gerado:[/] [blue]{Path.GetDirectoryName(resultado.CaminhoPacote).EscapeMarkup()}[/]");
         console.WriteLine();
 
         var table = new Table()

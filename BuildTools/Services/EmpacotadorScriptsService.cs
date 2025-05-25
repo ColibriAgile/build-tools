@@ -7,39 +7,40 @@ using Spectre.Console;
 namespace BuildTools.Services;
 
 /// <inheritdoc/>
-public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsService
+/// <summary>
+/// Inicializa uma nova instância da classe <see cref="EmpacotadorScriptsService"/>.
+/// </summary>
+/// <param name="fileSystem">Abstração do sistema de arquivos.</param>
+/// <param name="console">
+/// AnsiConsole para exibir mensagens no console.
+/// </param>
+/// <param name="zipService">
+/// Abstração do serviço de compactação de arquivos zip.
+/// </param>
+public sealed partial class EmpacotadorScriptsService(IFileSystem fileSystem, IAnsiConsole console, IZipService zipService) : IEmpacotadorScriptsService
 {
-    private readonly IFileSystem _fileSystem;
-    private readonly IAnsiConsole _console;
-    private readonly IZipService _zipService;
-
     /// <summary>
-    /// Inicializa uma nova instância da classe <see cref="EmpacotadorScriptsService"/>.
+    /// Verifica se a pasta contém um arquivo config.json válido.
     /// </summary>
-    /// <param name="fileSystem">Abstração do sistema de arquivos.</param>
-    /// <param name="console">
-    /// AnsiConsole para exibir mensagens no console.
+    /// <param name="pasta">
+    /// Pasta a ser verificada.
     /// </param>
-    /// <param name="zipService">
-    /// Abstração do serviço de compactação de arquivos zip.
-    /// </param>
-    public EmpacotadorScriptsService(IFileSystem fileSystem, IAnsiConsole console, IZipService zipService)
-    {
-        _fileSystem = fileSystem;
-        _console = console;
-        _zipService = zipService;
-    }
-
+    /// <returns>
+    /// Verdadeiro se o arquivo config.json é válido; caso contrário, falso.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Lançada quando o arquivo config.json é inválido.
+    /// </exception>
     internal bool TemConfigJson(string pasta)
     {
         var arq = Path.Combine(pasta, "config.json");
 
-        if (!_fileSystem.File.Exists(arq))
+        if (!fileSystem.File.Exists(arq))
             return false;
 
         try
         {
-            var jsonText = _fileSystem.File.ReadAllText(arq);
+            var jsonText = fileSystem.File.ReadAllText(arq);
             using var doc = JsonDocument.Parse(jsonText);
 
             return true;
@@ -55,17 +56,17 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
     {
         try
         {
-            if (!_fileSystem.Directory.Exists(pasta))
+            if (!fileSystem.Directory.Exists(pasta))
             {
-                _console.MarkupLineInterpolated($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
+                console.MarkupLineInterpolated($"[red][[ERROR]] A pasta de origem não existe: {pasta}[/]");
 
                 throw new DirectoryNotFoundException($"A pasta de origem não existe: {pasta}");
             }
 
-            _fileSystem.Directory.CreateDirectory(saida);
+            fileSystem.Directory.CreateDirectory(saida);
 
             if (!silencioso)
-                _console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
+                console.MarkupLineInterpolated($"[yellow][[INFO]] Pasta de saída criada: {saida}[/]");
 
             var arquivosGerados = new List<string>();
             var arquivosRenomeados = new List<(string Antigo, string Novo)>();
@@ -73,7 +74,7 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
             var sw = Stopwatch.StartNew();
 
             if (!silencioso)
-                _console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
+                console.MarkupLine("[blue][[INFO]] Iniciando empacotamento...[/]");
 
             ProcessarEmpacotamento(pasta, saida, silencioso, arquivosGerados);
 
@@ -83,18 +84,26 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
             sw.Stop();
 
             if (!silencioso)
-                _console.MarkupLineInterpolated($"[green][[SUCCESS]] Todos os pacotes gerados com sucesso em {sw.Elapsed.TotalSeconds:N1}s.[/]");
+                console.MarkupLineInterpolated($"[green][[SUCCESS]] Todos os pacotes gerados com sucesso em {sw.Elapsed.TotalSeconds:N1}s.[/]");
 
             return new EmpacotamentoScriptResultado(arquivosGerados, arquivosRenomeados);
         }
         catch (Exception ex)
         {
-            _console.WriteException(ex, ExceptionFormats.ShortenEverything);
+            console.WriteException(ex, ExceptionFormats.ShortenEverything);
 
             throw;
         }
     }
 
+    /// <summary>
+    /// Processa o empacotamento dos scripts.
+    /// Cria pacotes zip para cada subpasta válida dentro da pasta especificada.
+    /// </summary>
+    /// <param name="pasta">Pasta de origem dos scripts.</param>
+    /// <param name="saida">Pasta de saída dos pacotes gerados.</param>
+    /// <param name="silencioso">Indica se o modo silencioso está ativado.</param>
+    /// <param name="arquivosGerados">Lista de arquivos gerados durante o empacotamento.</param>
     private void ProcessarEmpacotamento(string pasta, string saida, bool silencioso, List<string> arquivosGerados)
     {
         if (TemConfigJson(pasta))
@@ -115,6 +124,18 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
         }
     }
 
+    /// <summary>
+    /// Renomeia os arquivos de acordo com o padrão definido.
+    /// </summary>
+    /// <param name="arquivos">
+    /// Lista de arquivos a serem renomeados.
+    /// </param>
+    /// <param name="silencioso">
+    /// Indica se o modo silencioso está ativado.
+    /// </param>
+    /// <returns>
+    /// Lista de tuplas contendo o nome antigo e o novo nome dos arquivos renomeados.
+    /// </returns>
     private List<(string Antigo, string Novo)> PadronizarNomesArquivos(IEnumerable<string> arquivos, bool silencioso)
     {
         var regex = RegexPadronizaNomes();
@@ -131,11 +152,11 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
 
             try
             {
-                _fileSystem.File.Move(arquivo, novoCaminho, overwrite: true);
+                fileSystem.File.Move(arquivo, novoCaminho, overwrite: true);
             }
             catch (Exception ex)
             {
-                _console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao renomear arquivo {arquivo} para {novoCaminho}: {ex.Message}[/]");
+                console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao renomear arquivo {arquivo} para {novoCaminho}: {ex.Message}[/]");
 
                 throw;
             }
@@ -143,12 +164,19 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
             renomeados.Add((arquivo, novoCaminho));
 
             if (!silencioso)
-                _console.MarkupLineInterpolated($"[blue][[INFO]] Arquivo renomeado: {nome} » {novoNome}[/]");
+                console.MarkupLineInterpolated($"[blue][[INFO]] Arquivo renomeado: {nome} » {novoNome}[/]");
         }
 
         return renomeados;
     }
 
+    /// <summary>
+    /// Empacota os scripts diretamente em um arquivo zip.
+    /// Cria um pacote zip contendo todos os arquivos de script encontrados na pasta de origem.
+    /// </summary>
+    /// <param name="pastaOrigem">Pasta de origem dos scripts.</param>
+    /// <param name="destinoZip">Caminho do arquivo zip de destino.</param>
+    /// <param name="silencioso">Indica se o modo silencioso está ativado.</param>
     private void EmpacotarScriptsDireto(string pastaOrigem, string destinoZip, bool silencioso)
     {
         var arquivos = ListarArquivosComRelativo(pastaOrigem).ToList();
@@ -156,42 +184,54 @@ public sealed partial class EmpacotadorScriptsService : IEmpacotadorScriptsServi
         if (arquivos.Count <= 1) // Só tem o config.json
         {
             if (!silencioso)
-                _console.MarkupLineInterpolated($"[yellow][[WARN]] Nenhum arquivo de script encontrado em: {pastaOrigem}[/]");
+                console.MarkupLineInterpolated($"[yellow][[WARN]] Nenhum arquivo de script encontrado em: {pastaOrigem}[/]");
 
             return;
         }
 
-        if (_fileSystem.File.Exists(destinoZip))
-            _fileSystem.File.Delete(destinoZip);
+        if (fileSystem.File.Exists(destinoZip))
+            fileSystem.File.Delete(destinoZip);
 
-        _zipService.CompactarZip(pastaOrigem, arquivos, destinoZip);
+        zipService.CompactarZip(pastaOrigem, arquivos, destinoZip);
 
         if (!silencioso)
-            _console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
+            console.MarkupLineInterpolated($"[green][[SUCCESS]] Pacote gerado: {destinoZip}[/]");
     }
 
+    /// <summary>
+    /// Lista as subpastas válidas dentro de uma pasta.
+    /// Uma subpasta é considerada válida se seu nome corresponde ao padrão definido e contém um arquivo config.json.
+    /// </summary>
+    /// <param name="pasta">Pasta a ser verificada.</param>
+    /// <returns>Lista de subpastas válidas.</returns>
     internal IEnumerable<string> ListarSubpastasValidas(string pasta)
     {
         var regex = RegexPastasValidas();
 
-        return _fileSystem.Directory
+        return fileSystem.Directory
             .EnumerateDirectories(pasta)
-            .Where(subpasta => regex.IsMatch(_fileSystem.Path.GetFileName(subpasta))
+            .Where(subpasta => regex.IsMatch(fileSystem.Path.GetFileName(subpasta))
                 && TemConfigJson(subpasta));
     }
 
+    /// <summary>
+    /// Lista os arquivos dentro de uma pasta, retornando o caminho completo e o caminho relativo.
+    /// Inclui todos os arquivos .sql e .migration recursivamente, mantendo a estrutura relativa.
+    /// </summary>
+    /// <param name="pasta">Pasta a ser verificada.</param>
+    /// <returns>Lista de arquivos com seus caminhos completos e relativos.</returns>
     internal IEnumerable<(string CaminhoCompleto, string CaminhoNoZip)> ListarArquivosComRelativo(string pasta)
     {
         // Inclui todos os arquivos .sql e .migration recursivamente, mantendo estrutura relativa
-        var arquivos = _fileSystem.Directory
+        var arquivos = fileSystem.Directory
             .EnumerateFiles(pasta, "*.sql", SearchOption.AllDirectories)
-            .Concat(_fileSystem.Directory.EnumerateFiles(pasta, "*.migration", SearchOption.AllDirectories))
+            .Concat(fileSystem.Directory.EnumerateFiles(pasta, "*.migration", SearchOption.AllDirectories))
             .ToList();
 
         // Sempre inclui o config.json da raiz
         var config = Path.Combine(pasta, "config.json");
 
-        if (_fileSystem.File.Exists(config))
+        if (fileSystem.File.Exists(config))
             arquivos.Add(config);
 
         foreach (var arquivo in arquivos)

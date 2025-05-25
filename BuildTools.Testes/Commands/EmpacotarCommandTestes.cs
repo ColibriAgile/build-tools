@@ -150,6 +150,7 @@ public sealed class EmpacotarCommandTestes
         // Assert
         result.ShouldBe(0);
         _console.Output.ShouldContain("SUCCESS");
+        _console.Profile.Capabilities.Ansi.ShouldBeFalse();
     }
 
     [Fact]

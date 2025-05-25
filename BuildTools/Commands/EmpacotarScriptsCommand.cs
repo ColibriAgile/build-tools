@@ -103,7 +103,7 @@ public sealed class EmpacotarScriptsCommand : Command
         try
         {
             if (semCor)
-                AnsiConsole.Profile.Capabilities.Ansi = false;
+                _console.Profile.Capabilities.Ansi = false;
 
             var resultado = _empacotadorScriptsService.Empacotar(pasta, saida, padronizarNomes, silencioso);
 
