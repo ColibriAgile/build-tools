@@ -20,12 +20,12 @@ inputs:
     required: false
 
 outputs:
-  caminho_cmpkg:
+  caminho-cmpkg:
     description: Caminho completo do arquivo .cmpkg gerado
-    value: ${{ steps.arquivo_gerado.outputs.arquivo }}
-  nome_cmpkg:
+    value: ${{ steps.arquivo-gerado.outputs.caminho-cmpkg }}
+  nome-cmpkg:
     description: Nome do arquivo .cmpkg gerado
-    value: ${{ steps.arquivo_gerado.outputs.nome }}
+    value: ${{ steps.arquivo-gerado.outputs.nome-cmpkg }}
 
 runs:
   using: composite
@@ -56,7 +56,7 @@ runs:
         }
 
     - name: Encontrar arquivo gerado
-      id: arquivo_gerado
+      id: arquivo-gerado
       shell: pwsh
       run: |
         $arquivos = Get-ChildItem -Path "${{ inputs.pasta-destino }}" -Filter *.cmpkg | Sort-Object LastWriteTime -Descending
@@ -66,5 +66,5 @@ runs:
         }
         $caminho = $arquivos[0].FullName
         $nome = $arquivos[0].Name
-        "caminho_cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
-        "nome_cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
+        "caminho-cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
+        "nome-cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
