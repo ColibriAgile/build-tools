@@ -19,6 +19,11 @@ inputs:
     description: Parâmetros extras para o BuildTools (opcional)
     required: false
 
+outputs:
+  arquivo-gerado:
+    description: Caminho completo do arquivo .cmpkg gerado
+    value: ${{ steps.arquivo_gerado.outputs.arquivo }}
+
 runs:
   using: composite
   steps:
@@ -45,3 +50,15 @@ runs:
           Write-Error "Erro ao executar BuildTools.exe: $_"
           exit 1
         }
+
+    - name: Encontrar arquivo gerado
+      id: arquivo_gerado
+      shell: pwsh
+      run: |
+        $arquivos = Get-ChildItem -Path "${{ inputs.pasta-destino }}" -Filter *.cmpkg | Sort-Object LastWriteTime -Descending
+        if ($arquivos.Count -eq 0) {
+          Write-Error "Nenhum arquivo .cmpkg encontrado na pasta de destino."
+          exit 1
+        }
+        $arquivo = $arquivos[0].FullName
+        echo "::set-output name=arquivo::$arquivo"
