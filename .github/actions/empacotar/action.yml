@@ -20,9 +20,12 @@ inputs:
     required: false
 
 outputs:
-  arquivo-gerado:
+  caminho-cmpkg:
     description: Caminho completo do arquivo .cmpkg gerado
     value: ${{ steps.arquivo_gerado.outputs.arquivo }}
+  nome-cmpkg:
+    description: Nome do arquivo .cmpkg gerado
+    value: ${{ steps.arquivo_gerado.outputs.nome }}
 
 runs:
   using: composite
@@ -60,5 +63,7 @@ runs:
           Write-Error "Nenhum arquivo .cmpkg encontrado na pasta de destino."
           exit 1
         }
-        $arquivo = $arquivos[0].FullName
-        echo "::set-output name=arquivo::$arquivo"
+        $caminho = $arquivos[0].FullName
+        $nome = $arquivos[0].Name
+        "caminho-cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "nome-cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
