@@ -22,10 +22,10 @@ inputs:
 outputs:
   caminho-cmpkg:
     description: Caminho completo do arquivo .cmpkg gerado
-    value: ${{ steps.arquivo-gerado.outputs.caminho-cmpkg }}
+    value: ${{ steps.arquivo-gerado.outputs.caminho }}
   nome-cmpkg:
     description: Nome do arquivo .cmpkg gerado
-    value: ${{ steps.arquivo-gerado.outputs.nome-cmpkg }}
+    value: ${{ steps.arquivo-gerado.outputs.nome }}
 
 runs:
   using: composite
