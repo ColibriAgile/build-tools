@@ -20,10 +20,10 @@ inputs:
     required: false
 
 outputs:
-  caminho-cmpkg:
+  caminho_cmpkg:
     description: Caminho completo do arquivo .cmpkg gerado
     value: ${{ steps.arquivo_gerado.outputs.arquivo }}
-  nome-cmpkg:
+  nome_cmpkg:
     description: Nome do arquivo .cmpkg gerado
     value: ${{ steps.arquivo_gerado.outputs.nome }}
 
@@ -47,10 +47,11 @@ runs:
             --saida "${{ inputs.pasta-destino }}" `
             --versao "${{ inputs.versao }}" `
             --develop "${{ inputs.develop }}" `
-            --resumo markdown `
+            --resumo console `
+            --sem-cor `
             ${{ inputs.extras }}
         } catch {
-          Write-Error "Erro ao executar BuildTools.exe: $_"
+          Write-Error "Erro ao executar BuildTools.exe:$($_.Exception.Message)"
           exit 1
         }
 
@@ -65,5 +66,5 @@ runs:
         }
         $caminho = $arquivos[0].FullName
         $nome = $arquivos[0].Name
-        "caminho-cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        "nome-cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "caminho_cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
+        "nome_cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
