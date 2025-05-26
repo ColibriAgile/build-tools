@@ -66,5 +66,5 @@ runs:
         }
         $caminho = $arquivos[0].FullName
         $nome = $arquivos[0].Name
-        "caminho-cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
-        "nome-cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
+        "caminho=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
+        "nome=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
