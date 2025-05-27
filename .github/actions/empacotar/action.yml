@@ -19,6 +19,14 @@ inputs:
     description: Parâmetros extras para o BuildTools (opcional)
     required: false
 
+outputs:
+  caminho-cmpkg:
+    description: Caminho completo do arquivo .cmpkg gerado
+    value: ${{ steps.arquivo-gerado.outputs.caminho }}
+  nome-cmpkg:
+    description: Nome do arquivo .cmpkg gerado
+    value: ${{ steps.arquivo-gerado.outputs.nome }}
+
 runs:
   using: composite
   steps:
@@ -34,14 +42,29 @@ runs:
       shell: pwsh
       run: |
         try {
-          .\BuildTools.exe empacotar \
-            --pasta "${{ inputs.pasta-origem }}" \
-            --saida "${{ inputs.pasta-destino }}" \
-            --versao "${{ inputs.versao }}" \
-            --develop "${{ inputs.develop }}" \
-            --resumo \
+          .\BuildTools.exe empacotar `
+            --pasta "${{ inputs.pasta-origem }}" `
+            --saida "${{ inputs.pasta-destino }}" `
+            --versao "${{ inputs.versao }}" `
+            --develop "${{ inputs.develop }}" `
+            --resumo console `
+            --sem-cor `
             ${{ inputs.extras }}
         } catch {
-          Write-Error "Erro ao executar BuildTools.exe: $_"
+          Write-Error "Erro ao executar BuildTools.exe:$($_.Exception.Message)"
           exit 1
         }
+
+    - name: Encontrar arquivo gerado
+      id: arquivo-gerado
+      shell: pwsh
+      run: |
+        $arquivos = Get-ChildItem -Path "${{ inputs.pasta-destino }}" -Filter *.cmpkg | Sort-Object LastWriteTime -Descending
+        if ($arquivos.Count -eq 0) {
+          Write-Error "Nenhum arquivo .cmpkg encontrado na pasta de destino."
+          exit 1
+        }
+        $caminho = $arquivos[0].FullName
+        $nome = $arquivos[0].Name
+        "caminho=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append
+        "nome=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8NoBom -Append

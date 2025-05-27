@@ -31,6 +31,7 @@ public sealed class EmpacotadorService
         // Gera o manifesto expandido e salva
         var manifestoExpandido = manifestoGeradorService.GerarManifestoExpandido(pasta, manifestoOriginal);
         manifestoService.SalvarManifesto(pasta, manifestoExpandido);
+        manifestoService.SalvarManifesto(pastaSaida, manifestoExpandido);
 
         // Pega a lista de arquivos do manifesto, ignorando outros arquivos da pasta
         var arquivos = manifestoExpandido.Arquivos
@@ -58,6 +59,6 @@ public sealed class EmpacotadorService
         if (arquivosNaoIncluidos.Count > 0)
             console.MarkupLineInterpolated($"[yellow][[WARN]] Os seguintes arquivos não foram incluídos no pacote: {string.Join(", ", arquivosNaoIncluidos)}[/]");
 
-        return new EmpacotamentoResultado(caminhoSaida, arquivos);
+        return new EmpacotamentoResultado(caminhoSaida, Path.Combine(pastaSaida, "manifesto.dat"), arquivos);
     }
 }

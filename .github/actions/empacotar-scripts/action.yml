@@ -3,18 +3,16 @@ name: Empacotar scripts
 description: >-
   Empacota scripts utilizando o BuildTools. Baixa automaticamente a versão mais recente do BuildTools.exe do repositório ColibriAgile/build-tools e executa o empacotamento de scripts, recebendo como parâmetros a pasta de origem, a pasta de destino e opções extras. Ideal para automatizar o empacotamento de scripts em pipelines CI/CD.
 
-on:
-  workflow_call:
-    inputs:
-      pasta-origem:
-        required: true
-        type: string
-      pasta-destino:
-        required: true
-        type: string
-      extras:
-        required: false
-        type: string
+inputs:
+  pasta-origem:
+    required: true
+    type: string
+  pasta-destino:
+    required: true
+    type: string
+  extras:
+    required: false
+    type: string
 
 jobs:
   empacotar-scripts:

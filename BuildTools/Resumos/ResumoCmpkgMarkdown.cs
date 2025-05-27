@@ -20,6 +20,7 @@ public sealed class ResumoCmpkgMarkdown(IAnsiConsole console, EmpacotamentoResul
         console.WriteLine("\n---");
         console.WriteLine("## Resumo do empacotamento\n");
         console.WriteLine($"- Pacote gerado: `{resultado.CaminhoPacote}`");
+        console.WriteLine($"- Manifesto.dat: `{resultado.CaminhoManifestoDat}`");
         console.WriteLine("\n### Arquivos incluídos no pacote:");
 
         foreach (var arq in resultado.ArquivosIncluidos)

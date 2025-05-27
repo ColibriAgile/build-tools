@@ -69,7 +69,7 @@ public sealed class EmpacotarCommand : Command
     /// Se deve executar o comando sem cores.
     /// </param>
     /// <param name="resumoOption">
-    /// Se deve imprimir o resumo em markdown ao final do processo.
+    /// Se deve imprimir o resumo em markdown ou console ao final do processo.
     /// </param>
     /// <param name="empacotadorService">Serviço para empacotamento de arquivos.</param>
     /// <param name="console">Console para saída de informações.</param>
