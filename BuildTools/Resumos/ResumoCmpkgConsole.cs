@@ -27,11 +27,12 @@ public sealed class ResumoCmpkgConsole(IAnsiConsole console, EmpacotamentoResult
             .AddColumn("Arquivos Incluídos");
 
         var nomePacote = Path.GetFileName(resultado.CaminhoPacote);
+        var nomeManifestoDat = Path.GetFileName(resultado.CaminhoManifestoDat);
         var arquivos = string.Join("\n", resultado.ArquivosIncluidos.Select(static a => $"[grey]{Path.GetFileName(a).EscapeMarkup()}[/]"));
 
         table.AddRow
         (
-            $"[blue]{nomePacote.EscapeMarkup()}[/]",
+            $"[blue]{nomePacote.EscapeMarkup()}[/]\n[green]{nomeManifestoDat.EscapeMarkup()}[/]",
             arquivos
         );
 

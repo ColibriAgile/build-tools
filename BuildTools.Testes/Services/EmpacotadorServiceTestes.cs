@@ -80,7 +80,8 @@ public sealed class EmpacotadorServiceTestes
         _manifestoService.Received(1).LerManifesto(PASTA);
         _manifestoGeradorService.Received(1).GerarManifestoExpandido(PASTA, manifestoOriginal);
         _manifestoService.Received(1).SalvarManifesto(PASTA, manifestoExpandido);
-
+        
+        _manifestoService.Received(1).SalvarManifesto(PASTA_SAIDA, manifestoExpandido);
         _arquivoService.Received(1).ExcluirComPrefixo(PASTA_SAIDA, "MeuPacote_", ".cmpkg");
 
         _zipService.Received(1).CompactarZip
