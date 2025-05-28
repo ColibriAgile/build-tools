@@ -1,0 +1,111 @@
+name: s3-uploader
+description: 'Compila e executa o s3-uploader com um arquivo CMPKG e ambiente especificados.'
+
+inputs:
+  cmpkg:
+    description: 'Caminho do arquivo CMPKG a ser enviado.'
+    required: true
+  stage:
+    description: 'Deploy para stage (true or false)'
+    required: true
+  repo_key:
+    description: 'Token para acessar o repositório s3-uploader'
+    required: true
+  nexus_username:
+    description: 'Usuário do Nexus'
+    required: true
+  nexus_password:
+    description: 'Senha do Nexus'
+    required: true
+  aws_access_key_id:
+    description: 'AWS Access Key ID'
+    required: true
+  aws_secret_access_key:
+    description: 'AWS Secret Access Key'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    # Faz o checkout do repositório s3-uploader
+    - name: Checkout (s3-uploader)
+      uses: actions/checkout@v4
+      with:
+        repository: ColibriAgile/s3-uploader
+        token: ${{ inputs.repo_key }}
+        path: s3-uploader
+
+    # Configura as credenciais da AWS para upload no S3
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: us-east-1
+
+    # Prepara o ambiente Java para compilar e rodar o uploader
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        cache: 'maven'
+
+    # Configura o Maven para acessar os repositórios Nexus
+    - name: Configurar Maven Action
+      uses: s4u/maven-settings-action@v3.1.0
+      with:
+        servers: |
+          [{
+              "id": "central",
+              "username": "${{ inputs.nexus_username }}",
+              "password": "${{ inputs.nexus_password }}"
+          },
+          {
+              "id": "maven-releases",
+              "username": "${{ inputs.nexus_username }}",
+              "password": "${{ inputs.nexus_password }}"
+          },
+          {
+              "id": "maven-snapshots",
+              "username": "${{ inputs.nexus_username }}",
+              "password": "${{ inputs.nexus_password }}"
+          }]
+
+    # Compila o projeto s3-uploader e prepara a pasta de trabalho
+    - name: Compilar s3-uploader
+      working-directory: ./s3-uploader
+      shell: bash
+      run: |
+        mvn package -q --no-transfer-progress
+        mkdir -p pacotes
+        cp target/s3-uploader.jar .
+
+    # Copia o arquivo CMPKG e demais arquivos necessários para a pasta pacotes
+    - name: Copiar arquivos para pasta pacotes
+      working-directory: ./s3-uploader
+      shell: bash
+      run: |
+        CMPKG_DIR=$(dirname "../${{ inputs.cmpkg }}")
+        echo "Copiando arquivos de $CMPKG_DIR para pacotes/"
+        cp -v "$CMPKG_DIR"/* pacotes/
+        echo "Conteúdo da pasta pacotes após cópia:"
+        ls -la pacotes/
+
+    # Lê as propriedades do manifesto.dat para obter informações do pacote
+    - name: Ler JSON do manifesto.dat
+      id: manifest
+      uses: zoexx/github-action-json-file-properties@release
+      with:
+        file_path: "s3-uploader/pacotes/manifesto.dat"
+  
+    # Executa o deploy do CMPKG para o S3
+    - name: Deploy
+      working-directory: ./s3-uploader
+      shell: bash
+      env:
+        STAGE: ${{ inputs.stage }}
+      run: |
+        echo "Executando s3-uploader na pasta pacotes/"
+        echo "Subindo ${{steps.manifest.outputs.nome}} ${{steps.manifest.outputs.versao}}"
+        java -jar s3-uploader.jar pacotes
