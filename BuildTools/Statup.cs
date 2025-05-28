@@ -33,6 +33,7 @@ public static class Startup
         services.AddSingleton<IArquivoService, ArquivoService>();
         
         // Serviços de Deploy
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddSingleton<IDeployService, DeployService>();
         services.AddSingleton<IS3Service, S3Service>();
         services.AddSingleton<IMarketplaceService, MarketplaceService>();

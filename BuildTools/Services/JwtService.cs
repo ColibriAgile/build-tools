@@ -1,9 +1,8 @@
 using System.Security.Claims;
-
-namespace BuildTools.Services;
-
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+
+namespace BuildTools.Services;
 
 /// <summary>
 /// Implementação do serviço JWT seguindo os padrões do sistema Java original.
@@ -11,7 +10,16 @@ using Microsoft.IdentityModel.Tokens;
 public sealed class JwtService : IJwtService
 {
     private const string TOKEN_FIXO = "93cc0ef1-eb78-4dba-acb8-1949a397ad38";
-    private const string CHAVE_BASE64 = "Q29saWJyaUBBZ2lsZQ=="; // Base64 de "Colibri@Agile"
+    private const string CHAVE_BASE64 = "Q29saWJyaUBBZ2lsZS1LZXkyNTYtU3VwZXJTZWNyZXRLZXkh"; // Base64 de "Colibri@Agile-Key256-SuperSecretKey!"
+
+    private readonly IDateTimeProvider _dateTimeProvider;
+
+    /// <summary>
+    /// Inicializa uma nova instância da classe <see cref="JwtService"/>.
+    /// </summary>
+    /// <param name="dateTimeProvider">Provedor de data e hora.</param>
+    public JwtService(IDateTimeProvider dateTimeProvider)
+        => _dateTimeProvider = dateTimeProvider;
 
     /// <summary>
     /// Gera um token JWT com as configurações padrão do sistema.
@@ -23,7 +31,7 @@ public sealed class JwtService : IJwtService
         var signingKey = new SymmetricSecurityKey(chaveBytes);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
-        var agora = DateTime.UtcNow;
+        var agora = _dateTimeProvider.UtcNow;
         var expiracao = agora.AddMinutes(15);
 
         var claims = new[]
