@@ -8,9 +8,7 @@ on:
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
-    
     steps:
       # Faz o checkout do código-fonte do repositório
       - name: Checkout code

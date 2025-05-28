@@ -16,33 +16,41 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    # Faz o checkout do código-fonte do repositório
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # Busca todo o histórico do repositório para o GitVersion funcionar corretamente
     - name: Fetch all history for GitVersion
       run: git fetch --prune --unshallow
 
+    # Configura o ambiente .NET 9.0.x
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
 
+    # Instala a ferramenta GitVersion
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v3.2.1
       with:
         versionSpec: '5.x'
 
+    # Executa o GitVersion para calcular a versão do build
     - name: Run GitVersion
       id: gitversion
       uses: gittools/actions/gitversion/execute@v3.2.1
 
+    # Exibe a versão calculada pelo GitVersion no log
     - name: Show calculated version
       run: |
         echo GitVersion: ${{ steps.gitversion.outputs.fullSemVer }}
 
+    # Restaura as dependências do projeto .NET
     - name: Restore dependencies
       run: dotnet restore BuildTools/BuildTools.csproj
 
+    # Publica o executável para Windows x64, usando a versão calculada
     - name: Publish win-x64
       run: |
         dotnet publish BuildTools/BuildTools.csproj `
@@ -50,10 +58,12 @@ jobs:
           -r win-x64 `
           /p:Version=${{ steps.gitversion.outputs.fullSemVer }}
 
+    # Lista os arquivos da pasta de publicação antes de criar o zip
     - name: List publish folder before zip
       if: success()
       run: dir BuildTools/bin/Release/net9.0/win-x64/publish
 
+    # Cria o arquivo zip do executável publicado
     - name: Publish zip artifact
       if: success()
       run: |
@@ -61,6 +71,7 @@ jobs:
         del BuildTools-*.zip 2>NUL
         7z a BuildTools-${{ steps.gitversion.outputs.assemblySemVer }}.win-x64.zip .\*
 
+    # Faz upload do zip gerado como artifact do workflow
     - name: Upload zip to workflow artifacts
       if: success()
       uses: actions/upload-artifact@v4
