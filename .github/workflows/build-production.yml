@@ -1,9 +1,10 @@
 name: Build production
+
 on:
-  workflow_dispatch:  
-  pull_request:
-    types: [closed]
-    branches: [production]
+  workflow_dispatch:
+  push:
+    branches:
+      - production    
 
 jobs:
   build:
@@ -11,20 +12,25 @@ jobs:
     runs-on: windows-latest
     
     steps:
+      # Faz o checkout do código-fonte do repositório
       - name: Checkout code
         uses: actions/checkout@v4
         
+      # Configura o ambiente .NET 9.0.x
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
           
+      # Restaura as dependências do projeto
       - name: Restore dependencies
         run: dotnet restore BuildTools/BuildTools.csproj
         
+      # Compila o projeto em modo Release
       - name: Build
         run: dotnet build BuildTools/BuildTools.csproj --configuration Release
         
+      # Publica o executável para Windows x64, self-contained
       - name: Publish win-x64
         run: |
           dotnet publish BuildTools/BuildTools.csproj `
@@ -33,10 +39,12 @@ jobs:
             --self-contained true `
             -o C:\BuildTools
             
+      # Lista os arquivos gerados na pasta de publicação
       - name: List C:\BuildTools
         if: success()
         run: dir C:\BuildTools
         
+      # Exclui o release existente (se houver) para evitar conflitos
       - name: Delete existing release
         if: success()
         continue-on-error: true
@@ -45,6 +53,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
+      # Publica um novo release no GitHub com o executável gerado
       - name: Publish release
         if: success()
         uses: softprops/action-gh-release@v2
