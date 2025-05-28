@@ -3,7 +3,6 @@ using System.Text.Json;
 using BuildTools.Models;
 using BuildTools.Services;
 using NSubstitute.ExceptionExtensions;
-using Spectre.Console;
 using Spectre.Console.Testing;
 
 namespace BuildTools.Testes.Services;

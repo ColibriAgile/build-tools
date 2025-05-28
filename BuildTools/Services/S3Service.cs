@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using Amazon.S3;
@@ -11,7 +13,21 @@ namespace BuildTools.Services;
 /// </summary>
 public sealed class S3Service : IS3Service, IDisposable
 {
-    private AmazonS3Client? _s3Client;
+    private IAmazonS3? _s3Client;
+    private Func<string, string, string, IAmazonS3>? _s3ClientFactory;
+
+    /// <summary>
+    /// Inicializa uma nova instância da classe <see cref="S3Service"/>.
+    /// </summary>
+    public S3Service()
+        => _s3ClientFactory = null;
+
+    /// <summary>
+    /// Inicializa uma nova instância da classe <see cref="S3Service"/> para testes.
+    /// </summary>
+    /// <param name="s3ClientFactory">Factory para criar clientes S3.</param>
+    internal S3Service(Func<string, string, string, IAmazonS3> s3ClientFactory)
+        => _s3ClientFactory = s3ClientFactory;
 
     /// <summary>
     /// Configura as credenciais AWS.
@@ -22,13 +38,19 @@ public sealed class S3Service : IS3Service, IDisposable
     public void ConfigurarCredenciais(string accessKey, string secretKey, string region)
     {
         _s3Client?.Dispose();
+        _s3ClientFactory ??= CreateS3;
+        _s3Client = _s3ClientFactory(accessKey, secretKey, region);
+    }
 
+    [ExcludeFromCodeCoverage]
+    private static IAmazonS3 CreateS3(string accessKey, string secretKey, string region)
+    {
         var config = new AmazonS3Config
         {
             RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region)
         };
 
-        _s3Client = new AmazonS3Client(accessKey, secretKey, config);
+        return new AmazonS3Client(accessKey, secretKey, config);
     }
 
     /// <summary>
@@ -42,13 +64,23 @@ public sealed class S3Service : IS3Service, IDisposable
         if (_s3Client == null)
             throw new InvalidOperationException("Credenciais AWS não configuradas. Chame ConfigurarCredenciais primeiro.");
 
+        ArgumentNullException.ThrowIfNull(bucket);
+
+        ArgumentNullException.ThrowIfNull(chave);
+
+        if (string.IsNullOrEmpty(bucket))
+            throw new ArgumentException("Bucket não pode ser vazio", nameof(bucket));
+
+        if (string.IsNullOrEmpty(chave))
+            throw new ArgumentException("Chave não pode ser vazia", nameof(chave));
+
         try
         {
             await _s3Client.GetObjectMetadataAsync(bucket, chave).ConfigureAwait(false);
 
             return true;
         }
-        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
@@ -67,6 +99,17 @@ public sealed class S3Service : IS3Service, IDisposable
         if (_s3Client == null)
             throw new InvalidOperationException("Credenciais AWS não configuradas. Chame ConfigurarCredenciais primeiro.");
 
+        ArgumentNullException.ThrowIfNull(manifesto);
+
+        if (string.IsNullOrEmpty(bucket))
+            throw new ArgumentException("Bucket não pode ser vazio", nameof(bucket));
+
+        if (string.IsNullOrEmpty(chave))
+            throw new ArgumentException("Chave não pode ser vazia", nameof(chave));
+
+        if (string.IsNullOrEmpty(caminhoArquivo))
+            throw new ArgumentException("Caminho do arquivo não pode ser vazio", nameof(caminhoArquivo));
+
         var metadata = CriarMetadata(manifesto);
 
         var request = new PutObjectRequest
@@ -78,9 +121,7 @@ public sealed class S3Service : IS3Service, IDisposable
         };
 
         foreach (var kvp in metadata)
-        {
             request.Metadata.Add(kvp.Key, kvp.Value);
-        }
 
         await _s3Client.PutObjectAsync(request).ConfigureAwait(false);
 

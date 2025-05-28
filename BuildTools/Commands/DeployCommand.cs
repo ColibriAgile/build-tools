@@ -25,7 +25,7 @@ public sealed class DeployCommand : Command
     private readonly Option<string> _ambienteOption = new
     (
         aliases: ["--ambiente", "-a"],
-        description: "Ambiente de deploy"
+        description: "Ambiente de deploy (\"desenvolvimento\", \"producao\" ou \"stage\")"
     )
     {
         IsRequired = false
