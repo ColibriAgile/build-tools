@@ -120,10 +120,9 @@ public sealed class EmpacotarScriptsCommand : Command
     /// <summary>
     /// Exibe um resumo dos arquivos gerados e renomeados.
     /// </summary>
-    /// <param name="arquivosGerados">
-    /// Lista de arquivos gerados.
+    /// <param name="resultado">
+    /// Instância contendo os resultados do empacotamento, incluindo arquivos gerados e renomeados.
     /// </param>
-    /// <param name="renomeados">Lista de arquivos renomeados, com os nomes antigos e novos.</param>
     /// <param name="resumo">
     /// Tipo de resumo a ser exibido. Pode ser "nenhum", "console" ou "markdown".
     /// </param>

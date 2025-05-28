@@ -31,6 +31,14 @@ public static class Startup
         services.AddSingleton<IManifestoService, ManifestoService>();
         services.AddSingleton<IManifestoGeradorService, ManifestoGeradorService>();
         services.AddSingleton<IArquivoService, ArquivoService>();
+        
+        // Serviços de Deploy
+        services.AddSingleton<IDeployService, DeployService>();
+        services.AddSingleton<IS3Service, S3Service>();
+        services.AddSingleton<IMarketplaceService, MarketplaceService>();
+        services.AddSingleton<IJwtService, JwtService>();
+        services.AddSingleton<HttpClient>();
+        services.AddSingleton<DeployCommand>();
 
         var silenciosoOption = new Option<bool>
         (
@@ -76,13 +84,13 @@ public static class Startup
 
         rootCommand.AddGlobalOption(silenciosoOption);
         rootCommand.AddGlobalOption(semCorOption);
-        rootCommand.AddGlobalOption(resumoOption);
-
-        var empacotarCommand = serviceProvider.GetRequiredService<EmpacotarCommand>();
+        rootCommand.AddGlobalOption(resumoOption);        var empacotarCommand = serviceProvider.GetRequiredService<EmpacotarCommand>();
         var empacotarScriptsCommand = serviceProvider.GetRequiredService<EmpacotarScriptsCommand>();
+        var deployCommand = serviceProvider.GetRequiredService<DeployCommand>();
 
         rootCommand.Add(empacotarCommand);
         rootCommand.Add(empacotarScriptsCommand);
+        rootCommand.Add(deployCommand);
 
         return rootCommand;
     }
