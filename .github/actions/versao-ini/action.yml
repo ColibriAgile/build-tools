@@ -1,4 +1,4 @@
-name: 'Obter versão'
+name: 'Obter versão do arquivo .INI'
 description: 'Extrai versão do arquivo ini, com defaults para 0 se chaves estiverem ausentes.'
 
 inputs:
