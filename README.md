@@ -19,11 +19,12 @@ O Colibri BuildTools é uma ferramenta CLI moderna em C# .NET 9 para empacotamen
 
 - Empacotamento de arquivos conforme manifesto (suporte a padrões regex)
 - Empacotamento de scripts SQL em pacotes zip para inclusão em .cmpkg
+- Deploy de pacotes .cmpkg para AWS S3 e notificação de marketplace
 - Geração e atualização automática do manifesto
 - Compactação ZIP nativa (System.IO.Compression)
 - Parâmetros avançados de linha de comando
 - Opção de padronização de nomes de arquivos zip
-- Resumo do empacotamento em console ou markdown
+- Resumo do empacotamento e deploy em console ou markdown
 - Estrutura modular e testável
 - Saída colorida e amigável via Spectre.Console
 - Suporte a execução silenciosa e sem cor
@@ -40,6 +41,12 @@ BuildTools empacotar --pasta <origem> --saida <destino> [--senha <senha>] [--ver
 
 ```sh
 BuildTools empacotar_scripts --pasta <origem> --saida <destino> [--padronizar_nomes <true|false>] [--resumo <tipo>] [--silencioso] [--sem-cor]
+```
+
+### Deploy de pacotes para AWS S3 e marketplace
+
+```sh
+BuildTools deploy <pasta> --ambiente <ambiente> --mkt-url <url> [--simulado] [--forcar] [--access-key <key>] [--secret-key <secret>] [--s3-region <regiao>] [--resumo <tipo>] [--silencioso] [--sem-cor]
 ```
 
 ## Parâmetros dos comandos
@@ -64,16 +71,77 @@ BuildTools empacotar_scripts --pasta <origem> --saida <destino> [--padronizar_no
 - `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
 - `--sem-cor`: Executa o comando sem cores (opcional)
 
+### Comando `deploy`
+
+- `<pasta>`: Pasta contendo os arquivos .cmpkg para deploy (**obrigatório**)
+- `--ambiente`, `-a`: Ambiente de destino: `desenvolvimento`, `producao` ou `stage` (**obrigatório**)
+- `--mkt-url`, `-m`: URL do marketplace para notificação (**obrigatório**)
+- `--simulado`, `-si`: Executa em modo simulação (não faz upload/notificação real) (opcional)
+- `--forcar`, `-f`: Força o upload mesmo se o arquivo já existir no S3 (opcional)
+- `--access-key`, `-ak`: Access Key da AWS (opcional, pode usar variável de ambiente AWS_ACCESS_KEY_ID)
+- `--secret-key`, `-sk`: Secret Key da AWS (opcional, pode usar variável de ambiente AWS_SECRET_ACCESS_KEY)
+- `--s3-region`, `-sr`: Região do bucket S3 (padrão: us-east-1) (opcional)
+- `--resumo`: Exibe um resumo ao final do deploy. Valores possíveis: `nenhum`, `console`, `markdown` (opcional)
+- `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
+- `--sem-cor`: Executa o comando sem cores (opcional)
+
+## Detalhes do Comando Deploy
+
+O comando `deploy` faz o upload de pacotes `.cmpkg` para AWS S3 e notifica um marketplace via API REST. Foi migrado do sistema Java s3-uploader original.
+
+### Configuração AWS
+
+As credenciais AWS podem ser fornecidas de duas formas:
+
+1. **Parâmetros de linha de comando**: `--access-key` e `--secret-key`
+2. **Variáveis de ambiente**: `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`
+
+### Estrutura de Pastas no S3
+
+- **desenvolvimento**: `packages-dev/`
+- **stage**: `packages-stage/`
+- **producao**: `packages/`
+
+### Funcionamento
+
+1. **Busca arquivos**: Localiza todos os arquivos `.cmpkg` na pasta especificada
+2. **Lê manifestos**: Extrai informações de cada manifesto (nome, versão, etc.)
+3. **Upload S3**: Faz upload para a pasta correspondente ao ambiente
+4. **Notificação**: Envia dados para o marketplace via POST com autenticação JWT
+5. **Relatório**: Exibe resumo dos sucessos e falhas
+
+### Autenticação Marketplace
+
+O sistema utiliza JWT com:
+
+- **Token fixo**: `93cc0ef1-eb78-4dba-acb8-1949a397ad38`
+- **Chave Base64**: `Q29saWJyaUBBZ2lsZQ==`
+
+### Exemplos de Uso
+
+```sh
+# Deploy básico para produção
+BuildTools deploy ./pacotes --ambiente producao --mkt-url https://marketplace.exemplo.com
+
+# Deploy em modo simulação
+BuildTools deploy ./pacotes --ambiente desenvolvimento --mkt-url https://dev.marketplace.com --simulado
+
+# Deploy forçado com credenciais AWS específicas
+BuildTools deploy ./pacotes --ambiente stage --mkt-url https://stage.marketplace.com --forcar --access-key AKIA... --secret-key xyz...
+```
+
 ## Estrutura do Projeto
 
-- `Commands/` - Comandos CLI (`empacotar`, `empacotar_scripts`)
+- `Commands/` - Comandos CLI (`empacotar`, `empacotar_scripts`, `deploy`)
 - `Services/` - Serviços de negócio e utilitários
-- `Models/` - Modelos de dados (manifesto, arquivos, etc)
+- `Models/` - Modelos de dados (manifesto, arquivos, deploy, etc)
 - `Constants/` - Constantes globais do empacotador
+- `Resumos/` - Implementações de resumos para console e markdown
 - `Program.cs` - Bootstrap e configuração DI
 
 ## Requisitos
 
 - .NET 9 SDK
 - Bibliotecas principais: System.CommandLine, System.IO.Abstractions, Spectre.Console, System.IO.Compression
+- Para comando `deploy`: AWS SDK for .NET (AWSSDK.S3), System.IdentityModel.Tokens.Jwt
 

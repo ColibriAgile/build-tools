@@ -1,7 +1,6 @@
 using BuildTools.Constants;
 using BuildTools.Services;
 using System.Diagnostics.CodeAnalysis;
-using Spectre.Console;
 using System.IO.Abstractions.TestingHelpers;
 
 namespace BuildTools.Testes.Services;
@@ -25,8 +24,7 @@ public sealed class ArquivoServiceTestes
             { $"{PASTA_TESTE}/OutroTeste_4_5_6.cmpkg", new MockFileData("conteudo") }
         });
 
-        var console = Substitute.For<IAnsiConsole>();
-        _service = new ArquivoService(_fileSystem, console);
+        _service = new ArquivoService(_fileSystem);
 
         // Limpa variáveis de ambiente que podem afetar os testes
         Environment.SetEnvironmentVariable("QA", null);

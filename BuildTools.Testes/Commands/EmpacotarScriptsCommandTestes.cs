@@ -7,8 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BuildTools.Testes.Commands;
 
-using Spectre.Console;
-
 [ExcludeFromCodeCoverage]
 public sealed class EmpacotarScriptsCommandTestes
 {

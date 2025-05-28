@@ -5,15 +5,6 @@ description: >-
 
 # Entradas obrigatórias para autenticação e upload
 inputs:
-  repo_key:
-    description: Chave do repositório para autenticação
-    required: true
-  nexus_username:
-    description: Usuário do Nexus
-    required: true
-  nexus_password:
-    description: Senha do Nexus
-    required: true
   aws_access_key_id:
     description: AWS Access Key ID
     required: true
@@ -47,28 +38,34 @@ runs:
 
     # Lista os arquivos baixados para conferência
     - name: Listar arquivos baixados
-      shell: bash
-      run: ls -l ./pacote
+      shell: pwsh
+      run: Get-ChildItem -Path ./pacote | Format-List
 
     # Captura o caminho e o nome do arquivo .cmpkg baixado e exporta como outputs
     - name: Obter o nome do CMPKG
       id: arquivo
-      shell: bash
+      shell: pwsh
       run: |
-        caminho=$(ls ./pacote/*.cmpkg | head -n 1)
-        nome=$(basename "$caminho")
-        echo "caminho-cmpkg=$caminho" >> $GITHUB_OUTPUT
-        echo "nome-cmpkg=$nome" >> $GITHUB_OUTPUT
+        $caminho = Get-ChildItem -Path ./pacote -Filter *.cmpkg | Select-Object -First 1 | Select-Object -ExpandProperty FullName
+        $nome = Split-Path $caminho -Leaf
+        "caminho-cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "nome-cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-    # Realiza o upload do arquivo .cmpkg para o bucket S3 usando o action customizado
-    - name: Deploy para S3
-      id: deploy-s3
-      uses: ColibriAgile/build-tools/.github/actions/s3-uploader@master
+    # Baixa o BuildTools.exe do último release do repositório ColibriAgile/build-tools
+    - name: Baixar buildTools.exe do GitHub Releases
+      uses: robinraju/release-downloader@v1
       with:
-        cmpkg: ${{ steps.arquivo.outputs.caminho-cmpkg }}
-        stage: false
-        repo_key: ${{ inputs.repo_key }}
-        nexus_username: ${{ inputs.nexus_username }}
-        nexus_password: ${{ inputs.nexus_password }}
-        aws_access_key_id: ${{ inputs.aws_access_key_id }}
-        aws_secret_access_key: ${{ inputs.aws_secret_access_key }}
+        repository: ColibriAgile/build-tools
+        latest: true
+        fileName: BuildTools.exe
+        token: ${{ github.token }}
+
+    # Realiza o upload do arquivo .cmpkg para o bucket S3 usando o BuildTools.exe
+    - name: Deploy para S3
+      id: deploy
+      shell: pwsh
+      run: |
+        ./BuildTools.exe deploy ./pacote `
+          --aws-access-key "${{ inputs.aws_access_key_id }}" `
+          --aws-secret-key "${{ inputs.aws_secret_access_key }}" `
+          --aws-region "us-east-1"
