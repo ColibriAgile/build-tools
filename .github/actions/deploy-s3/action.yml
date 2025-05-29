@@ -29,7 +29,10 @@ runs:
     # Lista os arquivos baixados para conferência
     - name: Listar arquivos baixados
       shell: pwsh
-      run: Get-ChildItem -Path ./pacote | Format-List
+      run: |
+        echo ``
+        Get-ChildItem -Path ./pacote
+        echo ``
 
     # Baixa o BuildTools.exe do último release do repositório ColibriAgile/build-tools
     - name: Baixar buildTools.exe do GitHub Releases
@@ -45,9 +48,11 @@ runs:
       id: deploy
       shell: pwsh
       run: |
+        echo ``
         ./BuildTools.exe deploy ./pacote `
           --ambiente producao `
           --resumo console `
           --aws-access-key "${{ inputs.aws_access_key_id }}" `
           --aws-secret-key "${{ inputs.aws_secret_access_key }}" `
           --aws-region "us-east-1"
+        echo ``
