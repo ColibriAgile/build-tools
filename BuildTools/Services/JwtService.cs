@@ -4,13 +4,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BuildTools.Services;
 
+using System.Text;
+
 /// <summary>
-/// Implementação do serviço JWT seguindo os padrões do sistema Java original.
+/// Implementação do serviço JWT compatível com sistema legado (chave "Colibri@Agile").
 /// </summary>
 public sealed class JwtService : IJwtService
 {
     private const string TOKEN_FIXO = "93cc0ef1-eb78-4dba-acb8-1949a397ad38";
-    private const string CHAVE_BASE64 = "Q29saWJyaUBBZ2lsZS1LZXkyNTYtU3VwZXJTZWNyZXRLZXkh"; // Base64 de "Colibri@Agile-Key256-SuperSecretKey!"
+    private const string CHAVE_LEGADA = "Colibri@Agile";
 
     private readonly IDateTimeProvider _dateTimeProvider;
 
@@ -21,14 +23,13 @@ public sealed class JwtService : IJwtService
     public JwtService(IDateTimeProvider dateTimeProvider)
         => _dateTimeProvider = dateTimeProvider;
 
-    /// <summary>
-    /// Gera um token JWT com as configurações padrão do sistema.
-    /// </summary>
-    /// <returns>Token JWT como string.</returns>
+    /// <inheritdoc />
     public string GerarToken()
     {
-        var chaveBytes = Convert.FromBase64String(CHAVE_BASE64);
-        var signingKey = new SymmetricSecurityKey(chaveBytes);
+        var chaveOriginal = Encoding.UTF8.GetBytes(CHAVE_LEGADA);
+        var chavePadded = PadKeyTo256Bits(chaveOriginal);
+
+        var signingKey = new SymmetricSecurityKey(chavePadded);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var agora = _dateTimeProvider.UtcNow;
@@ -52,5 +53,25 @@ public sealed class JwtService : IJwtService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// Completa a chave para 256 bits para compatibilidade com o HMAC SHA-256.
+    /// </summary>
+    /// <param name="key">
+    /// A chave original em bytes.
+    /// </param>
+    /// <returns>
+    /// A chave preenchida para 256 bits como um array de bytes.
+    /// </returns>
+    private static byte[] PadKeyTo256Bits(byte[] key)
+    {
+        if (key.Length >= 32)
+            return key;
+
+        var padded = new byte[32];
+        Buffer.BlockCopy(key, 0, padded, 0, key.Length);
+
+        return padded;
     }
 }

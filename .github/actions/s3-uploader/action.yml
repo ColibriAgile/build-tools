@@ -36,7 +36,7 @@ runs:
         path: s3-uploader
 
     # Configura as credenciais da AWS para upload no S3
-    - name: Configure AWS Credentials
+    - name: Configurar credenciais AWS
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ inputs.aws_access_key_id }}
@@ -44,7 +44,7 @@ runs:
         aws-region: us-east-1
 
     # Prepara o ambiente Java para compilar e rodar o uploader
-    - name: Setup Java
+    - name: Configurar Java
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'

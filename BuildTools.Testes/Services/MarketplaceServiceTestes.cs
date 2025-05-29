@@ -4,6 +4,7 @@ using System.Text.Json;
 using BuildTools.Models;
 using BuildTools.Services;
 using BuildTools.Testes.Helpers;
+using Spectre.Console.Testing;
 
 namespace BuildTools.Testes.Services;
 
@@ -19,18 +20,19 @@ public sealed class MarketplaceServiceTestes : IDisposable
     private const string NOME_PACOTE = "TestePacote";
     private const string VERSAO_PACOTE = "1.0.0";
     private const string SIGLA_EMPRESA = "EMP";
-    private const string ENDPOINT_NOTIFICAR = "/api/notificar";
+    private const string ENDPOINT_NOTIFICAR = "/api/secure/pacote/sync/";
 
     private readonly HttpClient _httpClient;
     private readonly IJwtService _jwtService = Substitute.For<IJwtService>();
     private readonly MarketplaceService _marketplaceService;
     private readonly TestHttpMessageHandler _httpMessageHandler;
+    private readonly TestConsole _console = new();
 
     public MarketplaceServiceTestes()
     {
         _httpMessageHandler = new TestHttpMessageHandler();
         _httpClient = new HttpClient(_httpMessageHandler);
-        _marketplaceService = new MarketplaceService(_httpClient, _jwtService);
+        _marketplaceService = new MarketplaceService(_httpClient, _jwtService, _console);
     }
 
     [Fact]
@@ -125,14 +127,14 @@ public sealed class MarketplaceServiceTestes : IDisposable
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.BadRequest)]
-    [InlineData(HttpStatusCode.Unauthorized)]
-    [InlineData(HttpStatusCode.Forbidden)]
-    [InlineData(HttpStatusCode.NotFound)]
-    [InlineData(HttpStatusCode.InternalServerError)]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    public async Task NotificarPacoteAsync_RespostaComErro_DeveRetornarFalse(HttpStatusCode statusCode)
+    [InlineData(HttpStatusCode.BadRequest, "Bad Request")]
+    [InlineData(HttpStatusCode.Unauthorized, "Unauthorized")]
+    [InlineData(HttpStatusCode.Forbidden, "Forbidden")]
+    [InlineData(HttpStatusCode.NotFound, "Not Found")]
+    [InlineData(HttpStatusCode.InternalServerError, "Internal Server Error")]
+    [InlineData(HttpStatusCode.BadGateway, "Bad Gateway")]
+    [InlineData(HttpStatusCode.ServiceUnavailable, "Service Unavailable")]
+    public async Task NotificarPacoteAsync_RespostaComErro_DeveRetornarFalse(HttpStatusCode statusCode, string reason)
     {
         // Arrange
         var manifesto = CriarManifesto(NOME_PACOTE, VERSAO_PACOTE, false);
@@ -145,6 +147,7 @@ public sealed class MarketplaceServiceTestes : IDisposable
 
         // Assert
         resultado.ShouldBeFalse();
+        _console.Output.ShouldContain("[ERROR]Erro ao notificar market: " + (int)statusCode + " - " + reason);
     }
 
     [Fact]
@@ -269,7 +272,7 @@ public sealed class MarketplaceServiceTestes : IDisposable
         request.Headers.Authorization?.Parameter.ShouldBe(TOKEN_JWT);
 
         // Verifica se não há headers duplicados ou acumulados
-        request.Headers.GetValues("Authorization").ShouldHaveSingleItem();
+        request.Headers.GetValues("TOKEN").ShouldHaveSingleItem();
     }
 
     [Theory]

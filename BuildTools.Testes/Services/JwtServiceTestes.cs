@@ -12,8 +12,9 @@ namespace BuildTools.Testes.Services;
 public sealed class JwtServiceTestes
 {
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
-    private readonly JwtService _service;    private const string TOKEN_FIXO_ESPERADO = "93cc0ef1-eb78-4dba-acb8-1949a397ad38";
-    private const string CHAVE_BASE64_ESPERADA = "Q29saWJyaUBBZ2lsZS1LZXkyNTYtU3VwZXJTZWNyZXRLZXkh";
+    private readonly JwtService _service;
+    private const string TOKEN_FIXO_ESPERADO = "93cc0ef1-eb78-4dba-acb8-1949a397ad38";
+    private const string CHAVE_BASE64_ESPERADA = "Q29saWJyaUBBZ2lsZQAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
     public JwtServiceTestes()
         => _service = new JwtService(_dateTimeProvider);
