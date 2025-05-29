@@ -29,7 +29,7 @@ public sealed class ResumoDeployMarkdownTestes
         output.ShouldContain("- **Ambiente**: desenvolvimento");
         output.ShouldContain("- **URL Marketplace**: https://marketplace.exemplo.com");
         output.ShouldContain("- **Simulado**: Não");
-        output.ShouldContain("- **Tempo de Execução**: 5,2s");
+        output.ShouldContain($"- **Tempo de Execução**: {resultado.TempoExecucao.TotalSeconds}s"); // Workaround para o ponto ou virgula que muda conforme cultura
         output.ShouldContain("- **Arquivos Enviados**: 2");
         output.ShouldContain("- **Arquivos Ignorados**: 0");
         output.ShouldContain("- **Arquivos com Falha**: 0");
@@ -288,7 +288,7 @@ public sealed class ResumoDeployConsoleTestes
         output.ShouldContain("Simulado");
         output.ShouldContain("Não");
         output.ShouldContain("Tempo de Execução");
-        output.ShouldContain("5,2s");
+        output.ShouldContain($"{resultado.TempoExecucao.TotalSeconds}s");
         output.ShouldContain("Arquivos Enviados");
         output.ShouldContain("2");
         output.ShouldContain("Arquivos Ignorados");
