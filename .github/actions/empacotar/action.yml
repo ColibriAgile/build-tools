@@ -30,6 +30,7 @@ outputs:
 runs:
   using: composite
   steps:
+    # Baixa o BuildTools.exe mais recente do repositório ColibriAgile/build-tools
     - name: Baixar buildTools.exe do GitHub Releases
       uses: robinraju/release-downloader@v1
       with:
@@ -38,6 +39,7 @@ runs:
         fileName: BuildTools.exe
         token: ${{ github.token }}
 
+    # Executa o BuildTools.exe para empacotar os arquivos conforme os parâmetros recebidos
     - name: Executar buildTools.exe (empacotar)
       shell: pwsh
       run: |
@@ -55,6 +57,7 @@ runs:
           exit 1
         }
 
+    # Encontra o arquivo .cmpkg gerado na pasta de destino e exporta como outputs
     - name: Encontrar arquivo gerado
       id: arquivo-gerado
       shell: pwsh
