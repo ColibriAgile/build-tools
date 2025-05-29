@@ -1,5 +1,5 @@
 # Limpa execuções antigas do workflow
-name: Clean workflow runs
+name: Limpar
 
 on:
   workflow_dispatch:
