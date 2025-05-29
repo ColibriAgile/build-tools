@@ -1,4 +1,5 @@
-name: Chamar limpeza de execuções antigas
+# Limpa execuções antigas do workflow
+name: Clean workflow runs
 
 on:
   workflow_dispatch:
@@ -7,6 +8,7 @@ on:
         description: 'Quantidade de execuções para manter'
         required: true
         default: '15'
+        
   schedule:
     - cron: '0 0 */2 * *'
 
