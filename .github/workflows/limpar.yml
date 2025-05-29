@@ -12,8 +12,13 @@ on:
   schedule:
     - cron: '0 0 */2 * *'
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   limpar-execucoes:
     uses: ColibriAgile/github-actions/.github/workflows/clean_runs.yml@main
     with:
-      keep_last: ${{ github.event.inputs.keep_last }}
+      keep_last: ${{ fromJSON(github.event.inputs.keep_last) }}
+    secrets: inherit
