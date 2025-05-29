@@ -1,0 +1,17 @@
+name: Chamar limpeza de execuções antigas
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_last:
+        description: 'Quantidade de execuções para manter'
+        required: true
+        default: '15'
+  schedule:
+    - cron: '0 0 */2 * *'
+
+jobs:
+  limpar-execucoes:
+    uses: ColibriAgile/github-actions/.github/workflows/clean_runs.yml@master
+    with:
+      keep_last: ${{ github.event.inputs.keep_last || 15 }}
