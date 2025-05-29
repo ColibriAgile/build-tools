@@ -98,7 +98,7 @@ public sealed class ResumoDeployMarkdown : IResumo
                 sb.AppendLine($"- **Empresa**: {arquivo.Manifesto.SiglaEmpresa}");
 
             if (!string.IsNullOrEmpty(arquivo.UrlS3))
-                sb.AppendLine($"- **URL S3**: [{arquivo.UrlS3}]({arquivo.UrlS3})");
+                sb.AppendLine($"- **URL S3**: [{arquivo.NomeArquivoS3}]({arquivo.UrlS3})");
 
             sb.AppendLine();
         }

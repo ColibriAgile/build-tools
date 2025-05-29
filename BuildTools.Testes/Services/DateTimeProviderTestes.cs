@@ -1,7 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using BuildTools.Services;
-using Shouldly;
-using Xunit;
 
 namespace BuildTools.Testes.Services;
 

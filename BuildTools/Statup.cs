@@ -31,7 +31,7 @@ public static class Startup
         services.AddSingleton<IManifestoService, ManifestoService>();
         services.AddSingleton<IManifestoGeradorService, ManifestoGeradorService>();
         services.AddSingleton<IArquivoService, ArquivoService>();
-        
+
         // Serviços de Deploy
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddSingleton<IDeployService, DeployService>();
