@@ -147,22 +147,21 @@ public sealed class DeployCommand : Command
     {
         _ambienteOption.SetDefaultValue("desenvolvimento");
 
-        _ambienteOption.AddValidator(result =>
-        {
-            var valor = result.GetValueForOption(_ambienteOption);
-
-            if (string.IsNullOrEmpty(valor))
+        _ambienteOption.AddValidator
+        (
+            result =>
             {
-                return;
-            }
+                var valor = result.GetValueForOption(_ambienteOption);
 
-            var ambientesValidos = new[] { "desenvolvimento", "producao", "stage" };
+                if (string.IsNullOrEmpty(valor))
+                    return;
 
-            if (!ambientesValidos.Contains(valor, StringComparer.OrdinalIgnoreCase))
-            {
-                result.ErrorMessage = $"Ambiente '{valor}' inválido. Valores permitidos: {string.Join(", ", ambientesValidos)}";
+                var ambientesValidos = new[] { "desenvolvimento", "producao", "stage" };
+
+                if (!ambientesValidos.Contains(valor, StringComparer.OrdinalIgnoreCase))
+                    result.ErrorMessage = $"Ambiente '{valor}' inválido. Valores permitidos: {string.Join(", ", ambientesValidos)}";
             }
-        });
+        );
     }
 
     /// <summary>
