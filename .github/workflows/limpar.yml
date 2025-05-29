@@ -16,4 +16,4 @@ jobs:
   limpar-execucoes:
     uses: ColibriAgile/github-actions/.github/workflows/clean_runs.yml@main
     with:
-      keep_last: ${{ github.event.inputs.keep_last || 15 }}
+      keep_last: ${{ github.event.inputs.keep_last }}
