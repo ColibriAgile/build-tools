@@ -1,5 +1,4 @@
 name: Deploy para S3
-
 description: >-
   Realiza o upload do arquivo .cmpkg gerado para o bucket S3, baixando o último release publicado do repositório e exportando o caminho do arquivo .cmpkg encontrado.
 
@@ -11,15 +10,6 @@ inputs:
   aws_secret_access_key:
     description: AWS Secret Access Key
     required: true
-
-# Outputs para reutilização em outros jobs
-outputs:
-  caminho-cmpkg:
-    description: Caminho completo do arquivo .cmpkg baixado
-    value: ${{ steps.arquivo.outputs.caminho-cmpkg }}
-  nome-cmpkg:
-    description: Nome do arquivo .cmpkg baixado
-    value: ${{ steps.arquivo.outputs.nome-cmpkg }}
 
 runs:
   using: composite
@@ -41,16 +31,6 @@ runs:
       shell: pwsh
       run: Get-ChildItem -Path ./pacote | Format-List
 
-    # Captura o caminho e o nome do arquivo .cmpkg baixado e exporta como outputs
-    - name: Obter o nome do CMPKG
-      id: arquivo
-      shell: pwsh
-      run: |
-        $caminho = Get-ChildItem -Path ./pacote -Filter *.cmpkg | Select-Object -First 1 | Select-Object -ExpandProperty FullName
-        $nome = Split-Path $caminho -Leaf
-        "caminho-cmpkg=$caminho" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        "nome-cmpkg=$nome" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
     # Baixa o BuildTools.exe do último release do repositório ColibriAgile/build-tools
     - name: Baixar buildTools.exe do GitHub Releases
       uses: robinraju/release-downloader@v1
@@ -66,6 +46,8 @@ runs:
       shell: pwsh
       run: |
         ./BuildTools.exe deploy ./pacote `
+          --ambiente producao `
+          --resumo console `
           --aws-access-key "${{ inputs.aws_access_key_id }}" `
           --aws-secret-key "${{ inputs.aws_secret_access_key }}" `
           --aws-region "us-east-1"
