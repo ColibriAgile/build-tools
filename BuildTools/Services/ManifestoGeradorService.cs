@@ -123,11 +123,11 @@ public sealed class ManifestoGeradorService(IFileSystem fileSystem) : IManifesto
     /// </returns>
     public static string CriarNomeArquivoCmpkg(string? siglaEmpresa, string versao, string nome, out string prefixo)
     {
-        var versaoLimpa = versao.Replace(".", "_");
+        var versaoLimpa = SanitizeFileName(versao.Replace(".", "_"));
 
-        var nomeLimpo = nome
+        var nomeLimpo = SanitizeFileName(nome
             .ToLowerInvariant()
-            .Replace(" ", string.Empty);
+            .Replace(" ", string.Empty));
 
         prefixo = !string.IsNullOrWhiteSpace(siglaEmpresa)
             ? $"{siglaEmpresa.ToLowerInvariant()}-{nomeLimpo}_"
