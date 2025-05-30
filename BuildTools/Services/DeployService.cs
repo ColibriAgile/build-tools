@@ -198,10 +198,7 @@ public sealed class DeployService
             manifesto.Develop = developElement.GetBoolean();
 
         if (dadosCompletos.TryGetValue("sigla_empresa", out var empresaObj) && empresaObj is JsonElement empresaElement)
-            manifesto.SiglaEmpresa = empresaElement.GetString();
-
-        if (dadosCompletos.TryGetValue("develop", out var developFlagObj) && developFlagObj is JsonElement developFlagElement)
-            manifesto.Develop = developFlagElement.GetBoolean();
+            manifesto.SiglaEmpresa = empresaElement.GetString(); 
 
         return manifesto;
     }
