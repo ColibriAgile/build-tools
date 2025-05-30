@@ -12,7 +12,9 @@ public interface IManifestoService
     /// </summary>
     /// <param name="pasta">Caminho da pasta.</param>
     /// <returns>Manifesto lido.</returns>
-    Manifesto LerManifesto(string pasta);    /// <summary>
+    Manifesto LerManifesto(string pasta);    
+    
+    /// <summary>
     /// Salva o manifesto na pasta informada.
     /// </summary>
     /// <param name="pasta">Caminho da pasta.</param>

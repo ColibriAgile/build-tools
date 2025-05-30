@@ -95,7 +95,7 @@ BuildTools notificar-market <pasta> [--ambiente <ambiente>] [--mkt-url <url>] [-
 ### Comando `notificar-market`
 
 - `<pasta>`: Pasta contendo o arquivo manifesto.dat (**obrigatório**)
-- `--ambiente`, `-a`: Ambiente de destino: `desenvolvimento`, `homologacao` ou `producao` (padrão: desenvolvimento) (opcional)
+- `--ambiente`, `-a`: Ambiente de destino: `desenvolvimento`, `stage` ou `producao` (padrão: desenvolvimento) (opcional)
 - `--mkt-url`, `-m`: URL do marketplace para notificação (opcional, usa URL padrão do ambiente)
 - `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
 - `--sem-cor`: Executa o comando sem cores (opcional)
