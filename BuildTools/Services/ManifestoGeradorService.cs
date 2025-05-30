@@ -33,10 +33,10 @@ public sealed class ManifestoGeradorService(IFileSystem fileSystem) : IManifesto
         arquivosManifesto.RemoveAll
         (
             static x => x.Nome != null
-                && x.Nome.Equals(Constants.EmpacotadorConstantes.MANIFESTO, StringComparison.OrdinalIgnoreCase)
+                && x.Nome.Equals(EmpacotadorConstantes.MANIFESTO, StringComparison.OrdinalIgnoreCase)
         );
 
-        arquivosManifesto.Insert(0, new ManifestoArquivo { Nome = Constants.EmpacotadorConstantes.MANIFESTO });
+        arquivosManifesto.Insert(0, new ManifestoArquivo { Nome = EmpacotadorConstantes.MANIFESTO });
 
         return new Manifesto
         {
@@ -185,5 +185,17 @@ public sealed class ManifestoGeradorService(IFileSystem fileSystem) : IManifesto
 
             arquivosJaAssociados.Add(nomePrevisto);
         }
+    }
+
+    /// <summary>
+    /// Sanitizes a file name by removing invalid characters.
+    /// </summary>
+    /// <param name="fileName">The file name to sanitize.</param>
+    /// <returns>The sanitized file name.</returns>
+    private static string SanitizeFileName(string fileName)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+
+        return string.Concat(fileName.Where(c => !invalidChars.Contains(c)));
     }
 }
