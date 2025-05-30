@@ -21,6 +21,12 @@ public sealed class Manifesto
     public required string Versao { get; set; }
 
     /// <summary>
+    /// Sigla da empresa responsável pelo pacote.
+    /// </summary>
+    [JsonPropertyName("sigla_empresa")]
+    public string? SiglaEmpresa { get; set; }
+
+    /// <summary>
     /// Lista de arquivos do pacote.
     /// </summary>
     [JsonPropertyName("arquivos")]
