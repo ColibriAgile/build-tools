@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace BuildTools.Testes.Services;
 
 /// <summary>
-/// Testes unit�rios para ManifestoService.
+/// Testes unitários para ManifestoService.
 /// </summary>
 [ExcludeFromCodeCoverage]
 public sealed class ManifestoServiceTestes
@@ -86,5 +86,139 @@ public sealed class ManifestoServiceTestes
         lido.ShouldNotBeNull();
         lido.Nome.ShouldBe("PacoteSalvo");
         lido.Versao.ShouldBe("3.0.0");
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoExisteManifestoDat_DeveLerComSucesso()
+    {
+        // Arrange
+        var dadosManifesto = new Dictionary<string, object>
+        {
+            ["nome"] = "PacoteDeploy",
+            ["versao"] = "1.5.0",
+            ["develop"] = false,
+            ["siglaEmpresa"] = "TESTE"
+        };
+
+        var json = JsonSerializer.Serialize(dadosManifesto, new JsonSerializerOptions { WriteIndented = true });
+        _fileSystem.AddFile($"{PASTA_TESTE}/manifesto.dat", new MockFileData(json));
+
+        // Act
+        var manifesto = await _service.LerManifestoDeployAsync(PASTA_TESTE);
+
+        // Assert
+        manifesto.ShouldNotBeNull();
+        manifesto.Nome.ShouldBe("PacoteDeploy");
+        manifesto.Versao.ShouldBe("1.5.0");
+        manifesto.Develop.ShouldBeFalse();
+        manifesto.SiglaEmpresa.ShouldBe("TESTE");
+        manifesto.DadosCompletos.ShouldNotBeNull();
+        manifesto.DadosCompletos.Count.ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoManifestoComDevelop_DeveLerCorreto()
+    {
+        // Arrange
+        var dadosManifesto = new Dictionary<string, object>
+        {
+            ["nome"] = "PacoteDesenv",
+            ["versao"] = "2.0.0-dev",
+            ["develop"] = true
+        };
+
+        var json = JsonSerializer.Serialize(dadosManifesto, new JsonSerializerOptions { WriteIndented = true });
+        _fileSystem.AddFile($"{PASTA_TESTE}/manifesto.dat", new MockFileData(json));
+
+        // Act
+        var manifesto = await _service.LerManifestoDeployAsync(PASTA_TESTE);
+
+        // Assert
+        manifesto.Nome.ShouldBe("PacoteDesenv");
+        manifesto.Versao.ShouldBe("2.0.0-dev");
+        manifesto.Develop.ShouldBeTrue();
+        manifesto.SiglaEmpresa.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoManifestoSemSiglaEmpresa_DeveLerCorreto()
+    {
+        // Arrange
+        var dadosManifesto = new Dictionary<string, object>
+        {
+            ["nome"] = "PacoteSemEmpresa",
+            ["versao"] = "1.0.0",
+            ["develop"] = false
+        };
+
+        var json = JsonSerializer.Serialize(dadosManifesto, new JsonSerializerOptions { WriteIndented = true });
+        _fileSystem.AddFile($"{PASTA_TESTE}/manifesto.dat", new MockFileData(json));
+
+        // Act
+        var manifesto = await _service.LerManifestoDeployAsync(PASTA_TESTE);
+
+        // Assert
+        manifesto.Nome.ShouldBe("PacoteSemEmpresa");
+        manifesto.Versao.ShouldBe("1.0.0");
+        manifesto.Develop.ShouldBeFalse();
+        manifesto.SiglaEmpresa.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoNaoExisteManifestoDat_DeveLancarFileNotFoundException()
+    {
+        // Act & Assert
+        var exception = await Should.ThrowAsync<FileNotFoundException>(() => _service.LerManifestoDeployAsync(PASTA_TESTE));
+
+        exception.Message.ShouldContain("Arquivo manifesto.dat não encontrado na pasta");
+        exception.Message.ShouldContain(PASTA_TESTE);
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoJsonInvalido_DeveLancarInvalidOperationException()
+    {
+        // Arrange
+        _fileSystem.AddFile($"{PASTA_TESTE}/manifesto.dat", new MockFileData("{json invalido}"));
+
+        // Act & Assert
+        var exception = await Should.ThrowAsync<JsonException>(() => _service.LerManifestoDeployAsync(PASTA_TESTE));
+
+        exception.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoManifestoVazio_DeveLancarInvalidOperationException()
+    {
+        // Arrange
+        _fileSystem.AddFile($"{PASTA_TESTE}/manifesto.dat", new MockFileData("null"));
+
+        // Act & Assert
+        var exception = await Should.ThrowAsync<InvalidOperationException>(() => _service.LerManifestoDeployAsync(PASTA_TESTE));
+
+        exception.Message.ShouldContain("Não foi possível deserializar o manifesto");
+    }
+
+    [Fact]
+    public async Task LerManifestoDeployAsync_QuandoManifestoComCamposVazios_DeveLerComValoresPadrao()
+    {
+        // Arrange
+        var dadosManifesto = new Dictionary<string, object>
+        {
+            ["nome"] = "",
+            ["versao"] = "",
+            ["develop"] = false
+        };
+
+        var json = JsonSerializer.Serialize(dadosManifesto, new JsonSerializerOptions { WriteIndented = true });
+        _fileSystem.AddFile($"{PASTA_TESTE}/manifesto.dat", new MockFileData(json));
+
+        // Act
+        var manifesto = await _service.LerManifestoDeployAsync(PASTA_TESTE);
+
+        // Assert
+        manifesto.Nome.ShouldBe(string.Empty);
+        manifesto.Versao.ShouldBe(string.Empty);
+        manifesto.Develop.ShouldBeFalse();
+        manifesto.SiglaEmpresa.ShouldBeNull();
     }
 }

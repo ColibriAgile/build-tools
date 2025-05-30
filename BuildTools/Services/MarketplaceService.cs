@@ -63,4 +63,24 @@ public sealed class MarketplaceService(HttpClient httpClient, IJwtService jwtSer
             return false;
         }
     }
+
+    /// <inheritdoc />
+    public string ObterUrlMarketplace(string ambiente, string? urlMarketplace = null)
+    {
+        if (!string.IsNullOrEmpty(urlMarketplace))
+            return urlMarketplace;
+
+        var isTest = string.Equals(Environment.GetEnvironmentVariable("TEST"), "true", StringComparison.OrdinalIgnoreCase);
+
+        if (isTest)
+            return "http://localhost:8888";
+
+        return ambiente.ToLowerInvariant() switch
+        {
+            "stage" => "https://qa-marketplace.ncrcolibri.com.br",
+            "producao" => "https://marketplace.ncrcolibri.com.br",
+            "desenvolvimento" => "https://qa-marketplace.ncrcolibri.com.br",
+            var _ => throw new ArgumentException($"Ambiente '{ambiente}' não é válido. Valores permitidos: 'desenvolvimento', 'producao', 'stage'.", nameof(ambiente))
+        };
+    }
 }

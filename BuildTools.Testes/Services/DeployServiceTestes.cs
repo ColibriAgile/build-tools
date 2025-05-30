@@ -177,6 +177,7 @@ public sealed class DeployServiceTestes
         // Arrange
         ConfigurarFileSystemComArquivos();
         var manifestoJson = CriarManifestoJson("TestePacote", "1.0.0", false);
+        _marketplaceService.ObterUrlMarketplace(AMBIENTE_DESENVOLVIMENTO, URL_MARKETPLACE_CUSTOM).Returns(URL_MARKETPLACE_CUSTOM);
 
         _fileSystem.File.ReadAllTextAsync(Arg.Any<string>())
             .Returns(manifestoJson);
@@ -185,11 +186,13 @@ public sealed class DeployServiceTestes
         Environment.SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY", AWS_SECRET_KEY);
 
         // Act
-        var resultado = await _deployService.ExecutarDeployAsync(
+        var resultado = await _deployService.ExecutarDeployAsync
+        (
             PASTA_TESTES,
             AMBIENTE_DESENVOLVIMENTO,
             URL_MARKETPLACE_CUSTOM,
-            simulado: true);
+            simulado: true
+        );
 
         // Assert
         resultado.UrlMarketplace.ShouldBe(URL_MARKETPLACE_CUSTOM);
@@ -201,6 +204,7 @@ public sealed class DeployServiceTestes
         // Arrange
         ConfigurarFileSystemComArquivos();
         var manifestoJson = CriarManifestoJson("TestePacote", "1.0.0", false);
+        _marketplaceService.ObterUrlMarketplace(AMBIENTE_DESENVOLVIMENTO, null).Returns("http://localhost:8888");
 
         _fileSystem.File.ReadAllTextAsync(Arg.Any<string>())
             .Returns(manifestoJson);
@@ -236,6 +240,7 @@ public sealed class DeployServiceTestes
     {
         // Arrange
         ConfigurarFileSystemComArquivos();
+        _marketplaceService.ObterUrlMarketplace(ambiente, null).Returns(urlEsperada);
         var manifestoJson = CriarManifestoJson("TestePacote", "1.0.0", false);
 
         _fileSystem.File.ReadAllTextAsync(Arg.Any<string>())
@@ -594,7 +599,7 @@ public sealed class DeployServiceTestes
 
         // Assert
         resultado.ArquivosEnviados.ShouldHaveSingleItem();
-        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("EMP-TestePacote_1_0_0.cmpkg");
+        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("emp-testepacote_1_0_0.cmpkg");
     }
 
     [Fact]
@@ -618,7 +623,7 @@ public sealed class DeployServiceTestes
 
         // Assert
         resultado.ArquivosEnviados.ShouldHaveSingleItem();
-        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("TestePacote_1_0_0.cmpkg");
+        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("testepacote_1_0_0.cmpkg");
     }
 
     [Fact]
