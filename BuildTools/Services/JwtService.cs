@@ -62,9 +62,6 @@ public sealed class JwtService(IDateTimeProvider dateTimeProvider) : IJwtService
     /// <returns>Chave com padding aplicado.</returns>
     private static byte[] FazerPaddingChave(byte[] chaveOriginal)
     {
-        if (chaveOriginal.Length >= TAMANHO_CHAVE_MINIMO)
-            return chaveOriginal;
-
         var chavePadded = new byte[TAMANHO_CHAVE_MINIMO];
         Array.Copy(chaveOriginal, chavePadded, chaveOriginal.Length);
 

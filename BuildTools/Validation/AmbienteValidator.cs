@@ -44,9 +44,6 @@ public static class AmbienteValidator
             {
                 var valor = result.GetValueForOption(opcao);
 
-                if (string.IsNullOrEmpty(valor))
-                    return;
-
                 if (!_ambientesValidos.Contains(valor, StringComparer.OrdinalIgnoreCase))
                     result.ErrorMessage = $"Ambiente '{valor}' inválido. Valores permitidos: {string.Join(", ", _ambientesValidos)}";
             }
