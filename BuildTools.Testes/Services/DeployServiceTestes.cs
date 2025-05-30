@@ -690,7 +690,7 @@ public sealed class DeployServiceTestes
         };
 
         if (!string.IsNullOrEmpty(siglaEmpresa))
-            manifesto["siglaEmpresa"] = siglaEmpresa;
+            manifesto["sigla_empresa"] = siglaEmpresa;
 
         return JsonSerializer.Serialize(manifesto);
     }

@@ -7,6 +7,11 @@
       "commandName": "Project",
       "commandLineArgs": "notificar-market D:\\projetos\\agent\\_build\\pacote --ambiente producao",
       "workingDirectory": "D:\\projetos\\agent\\_build\\pacote"
+    },
+    "Deploy": {
+      "commandName": "Project",
+      "commandLineArgs": "deploy D:\\projetos\\agent\\_build\\pacote -si --ambiente producao  --aws-access-key xxxxx --aws-secret-key xxxxx",
+      "workingDirectory": "D:\\projetos\\agent\\_build\\pacote"
     }
   }
 }
