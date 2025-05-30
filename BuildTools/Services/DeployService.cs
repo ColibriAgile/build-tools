@@ -198,7 +198,7 @@ public sealed class DeployService
             manifesto.Develop = developElement.GetBoolean();
 
         if (dadosCompletos.TryGetValue("sigla_empresa", out var empresaObj) && empresaObj is JsonElement empresaElement)
-            manifesto.SiglaEmpresa = empresaElement.GetString(); 
+            manifesto.SiglaEmpresa = empresaElement.GetString();
 
         return manifesto;
     }
@@ -209,14 +209,7 @@ public sealed class DeployService
     /// <param name="manifesto">Dados do manifesto.</param>
     /// <returns>Nome do arquivo .cmpkg.</returns>
     private static string CriarNomeArquivoCmpkg(ManifestoDeploy manifesto)
-    {
-        var versaoLimpa = manifesto.Versao.Replace(".", "_");
-        var nomeLimpo = manifesto.Nome.ToLowerInvariant();
-
-        return !string.IsNullOrEmpty(manifesto.SiglaEmpresa)
-            ? $"{manifesto.SiglaEmpresa.ToLowerInvariant()}-{nomeLimpo}_{versaoLimpa}.cmpkg"
-            : $"{nomeLimpo}_{versaoLimpa}.cmpkg";
-    }
+        => ManifestoGeradorService.CriarNomeArquivoCmpkg(manifesto.SiglaEmpresa, manifesto.Versao, manifesto.Nome, out var _);
 
     /// <summary>
     /// Processa um arquivo individual para deploy.

@@ -16,7 +16,6 @@ public sealed class EmpacotadorService
     IFileSystem fileSystem
 ) : IEmpacotadorService
 {
-
     /// <inheritdoc />
     public EmpacotamentoResultado Empacotar(string pasta, string pastaSaida, string senha = "", string? versao = null, bool develop = false)
     {
@@ -41,8 +40,14 @@ public sealed class EmpacotadorService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var prefixo = manifestoExpandido.Nome.Replace(" ", string.Empty) + "_";
-        var nomeCmpkg = prefixo + manifestoExpandido.Versao.Replace(" ", string.Empty).Replace(".", "_") + Constants.EmpacotadorConstantes.EXTENSAO_PACOTE;
+        var nomeCmpkg = ManifestoGeradorService.CriarNomeArquivoCmpkg
+        (
+            manifestoExpandido.SiglaEmpresa,
+            manifestoExpandido.Versao,
+            manifestoExpandido.Nome,
+            out var prefixo
+        );
+
         var caminhoSaida = Path.Combine(pastaSaida.TrimEnd('\\'), nomeCmpkg);
         arquivoService.ExcluirComPrefixo(pastaSaida, prefixo);
         zipService.CompactarZip(pasta, arquivos, caminhoSaida, senha);

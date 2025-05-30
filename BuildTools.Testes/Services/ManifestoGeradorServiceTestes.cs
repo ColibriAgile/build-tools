@@ -24,6 +24,7 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
+            SiglaEmpresa = "Teste",
             Arquivos =
             [
                 new ManifestoArquivo { Nome = "outro.txt" },
@@ -57,7 +58,9 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
-            Arquivos = [
+            SiglaEmpresa = "Teste",
+            Arquivos =
+            [
                 new ManifestoArquivo { PatternNome = @"^dados_\d+\.csv$" },
                 new ManifestoArquivo { Nome = "outro.txt" }
             ]
@@ -65,7 +68,7 @@ public sealed class ManifestoGeradorServiceTestes
 
         // Act & Assert
         Should.Throw<InvalidOperationException>(() => service.GerarManifestoExpandido(PASTA, manifesto))
-            .Message.ShouldBe("Nenhum arquivo encontrado para o pattern previsto no manifesto: ^dados_\\d+\\.csv$");
+            .Message.ShouldBe(@"Nenhum arquivo encontrado para o pattern previsto no manifesto: ^dados_\d+\.csv$");
     }
 
     [Fact]
@@ -82,7 +85,9 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
-            Arquivos = [
+            SiglaEmpresa = "Teste",
+            Arquivos =
+            [
                 new ManifestoArquivo { Nome = "arq.txt" },
                 new ManifestoArquivo { PatternNome = @"^arq\.txt$" }
             ]
@@ -107,6 +112,7 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
+            SiglaEmpresa = "Teste",
             Arquivos = [new ManifestoArquivo { Nome = "a.txt" }]
         };
 
@@ -131,6 +137,7 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
+            SiglaEmpresa = "Teste",
             Arquivos = [new ManifestoArquivo { Nome = "nao_existe.txt" }]
         };
 
@@ -153,12 +160,13 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
+            SiglaEmpresa = "Teste",
             Arquivos = [new ManifestoArquivo { PatternNome = @"^dados_\d+\.csv$" }]
         };
 
         // Act & Assert
         Should.Throw<InvalidOperationException>(() => service.GerarManifestoExpandido(PASTA, manifesto))
-            .Message.ShouldBe("Nenhum arquivo encontrado para o pattern previsto no manifesto: ^dados_\\d+\\.csv$");
+            .Message.ShouldBe(@"Nenhum arquivo encontrado para o pattern previsto no manifesto: ^dados_\d+\.csv$");
     }
 
     [Fact]
@@ -175,7 +183,9 @@ public sealed class ManifestoGeradorServiceTestes
         {
             Nome = "PacoteTeste",
             Versao = "1.0.0",
-            Arquivos = [
+            SiglaEmpresa = "Teste",
+            Arquivos =
+            [
                 new ManifestoArquivo { Nome = "arq.txt" },
                 new ManifestoArquivo { PatternNome = @"^nao_existe\.txt$" }
             ]
