@@ -104,7 +104,9 @@ public sealed class DeployService
         var secretKey = awsSecretKey ?? Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")
             ?? throw new InvalidOperationException("AWS Secret Key não informada. Configure via parâmetro --aws-secret-key ou variável AWS_SECRET_ACCESS_KEY");
 
-        var region = awsRegion ?? Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1"; return (accessKey, secretKey, region);
+        var region = awsRegion ?? Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1";
+
+        return (accessKey, secretKey, region);
     }
 
     /// <summary>

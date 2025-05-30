@@ -112,8 +112,6 @@ public sealed class DeployCommand : Command
         AddOption(_awsAccessKeyOption);
         AddOption(_awsSecretKeyOption);
         AddOption(_awsRegionOption);
-        _deployService = deployService;
-        _console = console;
 
         this.SetHandler
         (

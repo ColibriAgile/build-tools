@@ -151,9 +151,9 @@ O comando `notificar-market` permite notificar o marketplace sobre um pacote esp
 
 ### URLs Padrão por Ambiente
 
-- **desenvolvimento**: `https://www.mycolibri.com.br`
-- **homologacao**: `https://mycolibri-homolog.ciasc.gov.br`
-- **producao**: `https://www.mycolibri.com.br`
+- **desenvolvimento**: `https://qa-marketplace.ncrcolibri.com.br`
+- **stage**: `https://qa-marketplace.ncrcolibri.com.br`
+- **producao**: `https://marketplace.ncrcolibri.com.br`
 
 ### Exemplos de Notificação
 
