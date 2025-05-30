@@ -129,7 +129,7 @@ public sealed class ManifestoGeradorService(IFileSystem fileSystem) : IManifesto
             .ToLowerInvariant()
             .Replace(" ", string.Empty);
 
-        prefixo = !string.IsNullOrEmpty(siglaEmpresa)
+        prefixo = !string.IsNullOrWhiteSpace(siglaEmpresa)
             ? $"{siglaEmpresa.ToLowerInvariant()}-{nomeLimpo}_"
             : nomeLimpo + '_';
 
