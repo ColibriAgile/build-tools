@@ -14,6 +14,7 @@ namespace BuildTools.Commands;
 public sealed class DeployCommand : Command
 {
     private readonly IDeployService _deployService;
+
     private readonly IAnsiConsole _console;
 
     private readonly Argument<string> _pastaArgument = new
@@ -21,15 +22,6 @@ public sealed class DeployCommand : Command
         name: "pasta",
         description: "Pasta contendo os arquivos manifesto.dat e .cmpkg"
     );
-
-    private readonly Option<string> _ambienteOption = new
-    (
-        aliases: ["--ambiente", "-a"],
-        description: "Ambiente de deploy (\"desenvolvimento\", \"producao\" ou \"stage\")"
-    )
-    {
-        IsRequired = false
-    };
 
     private readonly Option<string> _marketplaceUrlOption = new
     (
@@ -74,8 +66,7 @@ public sealed class DeployCommand : Command
     (
         aliases: ["--aws-region"],
         description: "AWS Region (opcional, usa variável AWS_REGION ou 'us-east-1' se não informado)"
-    )
-    {
+    )    {
         IsRequired = false
     };
 
@@ -91,6 +82,9 @@ public sealed class DeployCommand : Command
     /// <param name="resumoOption">
     /// Se deve imprimir o resumo em markdown ou console ao final do processo.
     /// </param>
+    /// <param name="ambienteOption">
+    /// Opção para seleção de ambiente de deploy.
+    /// </param>
     /// <param name="deployService">Serviço para deploy de pacotes.</param>
     /// <param name="console">Console para saída de informações.</param>
     public DeployCommand
@@ -101,30 +95,32 @@ public sealed class DeployCommand : Command
         Option<bool> semCorOption,
         [FromKeyedServices("resumo")]
         Option<string> resumoOption,
+        [FromKeyedServices("ambiente")]
+        Option<string> ambienteOption,
         IDeployService deployService,
         IAnsiConsole console)
         : base("deploy", "Faz deploy de pacotes .cmpkg para AWS S3 e notifica o marketplace")
     {
+        _deployService = deployService;
+        _console = console;
+
         AddArgument(_pastaArgument);
-        AddOption(_ambienteOption);
+        AddOption(ambienteOption);
         AddOption(_marketplaceUrlOption);
         AddOption(_simuladoOption);
         AddOption(_forcarOption);
         AddOption(_awsAccessKeyOption);
         AddOption(_awsSecretKeyOption);
         AddOption(_awsRegionOption);
-
         _deployService = deployService;
         _console = console;
-
-        ConfigurarValidacoes();
 
         this.SetHandler
         (
             context =>
             {
                 var pasta = context.ParseResult.GetValueForArgument(_pastaArgument);
-                var ambiente = context.ParseResult.GetValueForOption(_ambienteOption) ?? "desenvolvimento";
+                var ambiente = context.ParseResult.GetValueForOption(ambienteOption) ?? "desenvolvimento";
                 var marketplaceUrl = context.ParseResult.GetValueForOption(_marketplaceUrlOption);
                 var simulado = context.ParseResult.GetValueForOption(_simuladoOption);
                 var forcar = context.ParseResult.GetValueForOption(_forcarOption);
@@ -136,30 +132,6 @@ public sealed class DeployCommand : Command
                 var resumo = context.ParseResult.GetValueForOption(resumoOption);
 
                 return HandleAsync(pasta, ambiente, marketplaceUrl, simulado, forcar, awsAccessKey, awsSecretKey, awsRegion, silencioso, semCor, resumo);
-            }
-        );
-    }
-
-    /// <summary>
-    /// Configura as validações para os parâmetros do comando.
-    /// </summary>
-    private void ConfigurarValidacoes()
-    {
-        _ambienteOption.SetDefaultValue("desenvolvimento");
-
-        _ambienteOption.AddValidator
-        (
-            result =>
-            {
-                var valor = result.GetValueForOption(_ambienteOption);
-
-                if (string.IsNullOrEmpty(valor))
-                    return;
-
-                var ambientesValidos = new[] { "desenvolvimento", "producao", "stage" };
-
-                if (!ambientesValidos.Contains(valor, StringComparer.OrdinalIgnoreCase))
-                    result.ErrorMessage = $"Ambiente '{valor}' inválido. Valores permitidos: {string.Join(", ", ambientesValidos)}";
             }
         );
     }

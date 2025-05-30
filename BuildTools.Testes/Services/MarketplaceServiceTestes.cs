@@ -312,6 +312,43 @@ public sealed class MarketplaceServiceTestes : IDisposable
         request.Headers.Authorization?.Parameter.ShouldBeNullOrEmpty();
     }
 
+    [Theory]
+    [InlineData("desenvolvimento", null, "https://qa-marketplace.ncrcolibri.com.br")]
+    [InlineData("stage", null, "https://qa-marketplace.ncrcolibri.com.br")]
+    [InlineData("producao", null, "https://marketplace.ncrcolibri.com.br")]
+    public void ObterUrlMarketplace_AmbienteSemUrlCustomizada_DeveRetornarUrlPadrao(string ambiente, string? urlCustomizada, string urlEsperada)
+    {
+        // Act
+        var resultado = _marketplaceService.ObterUrlMarketplace(ambiente, urlCustomizada);
+
+        // Assert
+        resultado.ShouldBe(urlEsperada);
+    }
+
+    [Theory]
+    [InlineData("desenvolvimento", "https://custom.marketplace.com")]
+    [InlineData("homologacao", "https://custom.marketplace.com")]
+    [InlineData("producao", "https://custom.marketplace.com")]
+    public void ObterUrlMarketplace_AmbienteComUrlCustomizada_DeveRetornarUrlCustomizada(string ambiente, string urlCustomizada)
+    {
+        // Act
+        var resultado = _marketplaceService.ObterUrlMarketplace(ambiente, urlCustomizada);
+
+        // Assert
+        resultado.ShouldBe(urlCustomizada);
+    }
+
+    [Fact]
+    public void ObterUrlMarketplace_AmbienteInvalido_DeveLancarArgumentException()
+    {
+        // Arrange
+        const string AMBIENTE_INVALIDO = "ambiente-inexistente";
+
+        // Act & Assert
+        Should.Throw<ArgumentException>(() => _marketplaceService.ObterUrlMarketplace(AMBIENTE_INVALIDO, null))
+            .Message.ShouldContain($"Ambiente '{AMBIENTE_INVALIDO}' não é válido");
+    }
+
     private static ManifestoDeploy CriarManifesto(string nome, string versao, bool develop, string? siglaEmpresa = null)
     {
         var dadosCompletos = new Dictionary<string, object>

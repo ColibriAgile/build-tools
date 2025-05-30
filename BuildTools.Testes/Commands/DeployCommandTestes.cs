@@ -1,11 +1,12 @@
-namespace BuildTools.Testes.Commands;
-
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 using BuildTools.Commands;
 using BuildTools.Models;
 using BuildTools.Services;
+using BuildTools.Validation;
 using Spectre.Console.Testing;
+
+namespace BuildTools.Testes.Commands;
 
 [ExcludeFromCodeCoverage]
 public sealed class DeployCommandTestes
@@ -16,15 +17,18 @@ public sealed class DeployCommandTestes
     private readonly RootCommand _rootCommand = new("Colibri BuildTools - Deploy de soluções");
     private readonly Option<bool> _semCorOption = new(aliases: ["--sem-cor", "-sc"]);
     private readonly Option<bool> _silenciosoOption = new(aliases: ["--silencioso", "-s"]);
+    private readonly Option<string> _ambienteOption = AmbienteValidator.CriarOpcaoAmbiente();
 
     public DeployCommandTestes()
     {
-        var cmd = new DeployCommand(_silenciosoOption, _semCorOption, _resumoOption, _deployService, _console);
+        var cmd = new DeployCommand(_silenciosoOption, _semCorOption, _resumoOption, _ambienteOption, _deployService, _console);
         _rootCommand.AddGlobalOption(_resumoOption);
         _rootCommand.AddGlobalOption(_silenciosoOption);
         _rootCommand.AddGlobalOption(_semCorOption);
         _rootCommand.AddCommand(cmd);
-    }    [Fact]
+    }
+
+    [Fact]
     public async Task InvokeAsync_QuandoAmbienteInvalido_DeveRetornarErro()
     {
         // Arrange
@@ -37,7 +41,8 @@ public sealed class DeployCommandTestes
             [
                 "deploy",
                 PASTA,
-                "--ambiente", AMBIENTE_INVALIDO
+                "--ambiente",
+                AMBIENTE_INVALIDO
             ]
         );
 

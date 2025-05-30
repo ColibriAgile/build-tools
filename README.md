@@ -20,6 +20,7 @@ O Colibri BuildTools é uma ferramenta CLI moderna em C# .NET 9 para empacotamen
 - Empacotamento de arquivos conforme manifesto (suporte a padrões regex)
 - Empacotamento de scripts SQL em pacotes zip para inclusão em .cmpkg
 - Deploy de pacotes .cmpkg para AWS S3 e notificação de marketplace
+- Notificação direta do marketplace para pacotes específicos
 - Geração e atualização automática do manifesto
 - Compactação ZIP nativa (System.IO.Compression)
 - Parâmetros avançados de linha de comando
@@ -47,6 +48,12 @@ BuildTools empacotar_scripts --pasta <origem> --saida <destino> [--padronizar_no
 
 ```sh
 BuildTools deploy <pasta> --ambiente <ambiente> --mkt-url <url> [--simulado] [--forcar] [--access-key <key>] [--secret-key <secret>] [--s3-region <regiao>] [--resumo <tipo>] [--silencioso] [--sem-cor]
+```
+
+### Notificar marketplace sobre pacote específico
+
+```sh
+BuildTools notificar-market <pasta> [--ambiente <ambiente>] [--mkt-url <url>] [--silencioso] [--sem-cor]
 ```
 
 ## Parâmetros dos comandos
@@ -85,6 +92,14 @@ BuildTools deploy <pasta> --ambiente <ambiente> --mkt-url <url> [--simulado] [--
 - `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
 - `--sem-cor`: Executa o comando sem cores (opcional)
 
+### Comando `notificar-market`
+
+- `<pasta>`: Pasta contendo o arquivo manifesto.dat (**obrigatório**)
+- `--ambiente`, `-a`: Ambiente de destino: `desenvolvimento`, `homologacao` ou `producao` (padrão: desenvolvimento) (opcional)
+- `--mkt-url`, `-m`: URL do marketplace para notificação (opcional, usa URL padrão do ambiente)
+- `--silencioso`: Executa o comando em modo silencioso, sem mensagens de log (opcional)
+- `--sem-cor`: Executa o comando sem cores (opcional)
+
 ## Detalhes do Comando Deploy
 
 O comando `deploy` faz o upload de pacotes `.cmpkg` para AWS S3 e notifica um marketplace via API REST. Foi migrado do sistema Java s3-uploader original.
@@ -110,13 +125,6 @@ As credenciais AWS podem ser fornecidas de duas formas:
 4. **Notificação**: Envia dados para o marketplace via POST com autenticação JWT
 5. **Relatório**: Exibe resumo dos sucessos e falhas
 
-### Autenticação Marketplace
-
-O sistema utiliza JWT com:
-
-- **Token fixo**: `93cc0ef1-eb78-4dba-acb8-1949a397ad38`
-- **Chave Base64**: `Q29saWJyaUBBZ2lsZQ==`
-
 ### Exemplos de Uso
 
 ```sh
@@ -128,6 +136,39 @@ BuildTools deploy ./pacotes --ambiente desenvolvimento --mkt-url https://dev.mar
 
 # Deploy forçado com credenciais AWS específicas
 BuildTools deploy ./pacotes --ambiente stage --mkt-url https://stage.marketplace.com --forcar --access-key AKIA... --secret-key xyz...
+```
+
+## Detalhes do Comando Notificar-Market
+
+O comando `notificar-market` permite notificar o marketplace sobre um pacote específico sem fazer upload para S3. É útil para re-notificar pacotes já enviados ou quando o upload foi feito separadamente.
+
+### Funcionamento da Notificação
+
+1. **Lê manifesto**: Localiza e lê o arquivo `manifesto.dat` na pasta especificada
+2. **Determina URL**: Usa URL customizada ou URL padrão do ambiente selecionado
+3. **Notificação**: Envia dados do pacote para o marketplace via POST com autenticação JWT
+4. **Feedback**: Exibe resultado da operação (sucesso ou falha)
+
+### URLs Padrão por Ambiente
+
+- **desenvolvimento**: `https://www.mycolibri.com.br`
+- **homologacao**: `https://mycolibri-homolog.ciasc.gov.br`
+- **producao**: `https://www.mycolibri.com.br`
+
+### Exemplos de Notificação
+
+```sh
+# Notificação simples para desenvolvimento (padrão)
+BuildTools notificar-market ./pasta-com-manifesto
+
+# Notificação para homologação
+BuildTools notificar-market ./pasta-com-manifesto --ambiente homologacao
+
+# Notificação com URL customizada
+BuildTools notificar-market ./pasta-com-manifesto --mkt-url https://custom.marketplace.com
+
+# Notificação silenciosa para produção
+BuildTools notificar-market ./pasta-com-manifesto --ambiente producao --silencioso
 ```
 
 ## Estrutura do Projeto

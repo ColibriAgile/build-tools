@@ -57,9 +57,41 @@ public sealed class ManifestoService(IFileSystem fileSystem) : IManifestoService
     public void SalvarManifesto(string pasta, Manifesto manifesto)
     {
         var caminho = Path.Combine(pasta, EmpacotadorConstantes.MANIFESTO);
-
         var json = JsonSerializer.Serialize(manifesto, _jsonSerializerOptions);
         fileSystem.Directory.CreateDirectory(pasta);
         fileSystem.File.WriteAllText(caminho, json);
+    }
+
+    /// <inheritdoc />
+    public async Task<ManifestoDeploy> LerManifestoDeployAsync(string pasta)
+    {
+        var caminhoManifesto = fileSystem.Path.Combine(pasta, "manifesto.dat");
+
+        if (!fileSystem.File.Exists(caminhoManifesto))
+            throw new FileNotFoundException($"Arquivo manifesto.dat não encontrado na pasta: {pasta}");
+
+        var json = await fileSystem.File.ReadAllTextAsync(caminhoManifesto).ConfigureAwait(false);
+
+        var dadosCompletos = JsonSerializer.Deserialize<Dictionary<string, object>>(json)
+            ?? throw new InvalidOperationException($"Não foi possível deserializar o manifesto: {caminhoManifesto}");
+
+        var manifesto = new ManifestoDeploy
+        {
+            DadosCompletos = dadosCompletos
+        };
+
+        if (dadosCompletos.TryGetValue("nome", out var nomeObj) && nomeObj is JsonElement nomeElement)
+            manifesto.Nome = nomeElement.GetString() ?? string.Empty;
+
+        if (dadosCompletos.TryGetValue("versao", out var versaoObj) && versaoObj is JsonElement versaoElement)
+            manifesto.Versao = versaoElement.GetString() ?? string.Empty;
+
+        if (dadosCompletos.TryGetValue("develop", out var developObj) && developObj is JsonElement developElement)
+            manifesto.Develop = developElement.GetBoolean();
+
+        if (dadosCompletos.TryGetValue("siglaEmpresa", out var empresaObj) && empresaObj is JsonElement empresaElement)
+            manifesto.SiglaEmpresa = empresaElement.GetString();
+
+        return manifesto;
     }
 }

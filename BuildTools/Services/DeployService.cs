@@ -1,46 +1,33 @@
 using System.IO.Abstractions;
 using System.Text.Json;
+using BuildTools.Models;
+using BuildTools.Validation;
 using Spectre.Console;
 
 namespace BuildTools.Services;
 
-using BuildTools.Models;
-
 /// <summary>
 /// Implementação do serviço de deploy.
 /// </summary>
-public sealed class DeployService : IDeployService
+/// <remarks>
+/// Inicializa uma nova instância da classe <see cref="DeployService"/>.
+/// </remarks>
+/// <param name="fileSystem">Sistema de arquivos para operações de I/O.</param>
+/// <param name="s3Service">Serviço AWS S3 para uploads.</param>
+/// <param name="marketplaceService">Serviço de notificação do marketplace.</param>
+/// <param name="console">Console para saída de informações.</param>
+public sealed class DeployService
+(
+    IFileSystem fileSystem,
+    IS3Service s3Service,
+    IMarketplaceService marketplaceService,
+    IAnsiConsole console
+) : IDeployService
 {
     private const string BUCKET_NAME = "ncr-colibri";
     private const string PREFIX_PRODUCAO = "packages";
     private const string PREFIX_DESENVOLVIMENTO = "packages-dev";
     private const string PREFIX_STAGE = "packages-stage";
-
-    private readonly IFileSystem _fileSystem;
-    private readonly IS3Service _s3Service;
-    private readonly IMarketplaceService _marketplaceService;
-    private readonly IAnsiConsole _console;
-
-    /// <summary>
-    /// Inicializa uma nova instância da classe <see cref="DeployService"/>.
-    /// </summary>
-    /// <param name="fileSystem">Sistema de arquivos para operações de I/O.</param>
-    /// <param name="s3Service">Serviço AWS S3 para uploads.</param>
-    /// <param name="marketplaceService">Serviço de notificação do marketplace.</param>
-    /// <param name="console">Console para saída de informações.</param>
-    public DeployService
-    (
-        IFileSystem fileSystem,
-        IS3Service s3Service,
-        IMarketplaceService marketplaceService,
-        IAnsiConsole console
-    )
-    {
-        _fileSystem = fileSystem;
-        _s3Service = s3Service;
-        _marketplaceService = marketplaceService;
-        _console = console;
-    }
 
     /// <summary>
     /// Executa o deploy de pacotes para AWS S3 e notifica o marketplace.
@@ -67,15 +54,14 @@ public sealed class DeployService : IDeployService
     )
     {
         var inicioExecucao = DateTime.UtcNow;
-
-        ValidarAmbiente(ambiente);
+        AmbienteValidator.ValidarAmbiente(ambiente);
 
         var credenciais = ObterCredenciaisAws(awsAccessKey, awsSecretKey, awsRegion);
-        var urlMarketplaceFinal = ObterUrlMarketplace(ambiente, urlMarketplace);
+        var urlMarketplaceFinal = marketplaceService.ObterUrlMarketplace(ambiente, urlMarketplace);
 
         if (!simulado)
         {
-            _s3Service.ConfigurarCredenciais(credenciais.AccessKey, credenciais.SecretKey, credenciais.Region);
+            s3Service.ConfigurarCredenciais(credenciais.AccessKey, credenciais.SecretKey, credenciais.Region);
         }
 
         var resultado = new DeployResultado
@@ -99,29 +85,18 @@ public sealed class DeployService : IDeployService
     }
 
     /// <summary>
-    /// Valida se o ambiente informado é válido.
-    /// </summary>
-    /// <param name="ambiente">Ambiente a ser validado.</param>
-    /// <exception cref="ArgumentException">Lançada quando o ambiente é inválido.</exception>
-    private static void ValidarAmbiente(string ambiente)
-    {
-        var ambientesValidos = new[] { "desenvolvimento", "producao", "stage" };
-
-        if (!ambientesValidos.Contains(ambiente, StringComparer.OrdinalIgnoreCase))
-            throw new ArgumentException($"Ambiente '{ambiente}' inválido. Valores permitidos: {string.Join(", ", ambientesValidos)}");
-    }
-
-    /// <summary>
     /// Obtém as credenciais AWS priorizando parâmetros sobre variáveis de ambiente.
     /// </summary>
     /// <param name="awsAccessKey">AWS Access Key fornecida como parâmetro.</param>
     /// <param name="awsSecretKey">AWS Secret Key fornecida como parâmetro.</param>
     /// <param name="awsRegion">AWS Region fornecida como parâmetro.</param>
     /// <returns>Credenciais AWS configuradas.</returns>
-    private static (string AccessKey, string SecretKey, string Region) ObterCredenciaisAws(
+    private static (string AccessKey, string SecretKey, string Region) ObterCredenciaisAws
+    (
         string? awsAccessKey,
         string? awsSecretKey,
-        string? awsRegion)
+        string? awsRegion
+    )
     {
         var accessKey = awsAccessKey ?? Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID")
             ?? throw new InvalidOperationException("AWS Access Key não informada. Configure via parâmetro --aws-access-key ou variável AWS_ACCESS_KEY_ID");
@@ -129,33 +104,7 @@ public sealed class DeployService : IDeployService
         var secretKey = awsSecretKey ?? Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")
             ?? throw new InvalidOperationException("AWS Secret Key não informada. Configure via parâmetro --aws-secret-key ou variável AWS_SECRET_ACCESS_KEY");
 
-        var region = awsRegion ?? Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1";
-
-        return (accessKey, secretKey, region);
-    }
-
-    /// <summary>
-    /// Obtém a URL do marketplace baseada no ambiente ou na URL fornecida.
-    /// </summary>
-    /// <param name="ambiente">Ambiente de deploy.</param>
-    /// <param name="urlMarketplace">URL customizada do marketplace.</param>
-    /// <returns>URL final do marketplace.</returns>
-    private static string ObterUrlMarketplace(string ambiente, string? urlMarketplace)
-    {
-        if (!string.IsNullOrEmpty(urlMarketplace))
-            return urlMarketplace;
-
-        var isTest = string.Equals(Environment.GetEnvironmentVariable("TEST"), "true", StringComparison.OrdinalIgnoreCase);
-
-        if (isTest)
-            return "http://localhost:8888";
-
-        return ambiente.ToLowerInvariant() switch
-        {
-            "stage" => "https://qa-marketplace.ncrcolibri.com.br",
-            "producao" => "https://marketplace.ncrcolibri.com.br",
-            var _ => "https://qa-marketplace.ncrcolibri.com.br"
-        };
+        var region = awsRegion ?? Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1"; return (accessKey, secretKey, region);
     }
 
     /// <summary>
@@ -167,10 +116,10 @@ public sealed class DeployService : IDeployService
     {
         var arquivos = new List<DeployArquivo>();
 
-        if (!_fileSystem.Directory.Exists(pasta))
+        if (!fileSystem.Directory.Exists(pasta))
             throw new DirectoryNotFoundException($"Pasta não encontrada: {pasta}");
 
-        var arquivosManifesto = _fileSystem.Directory.GetFiles(pasta, "*.dat");
+        var arquivosManifesto = fileSystem.Directory.GetFiles(pasta, "*.dat");
 
         foreach (var manifestoPath in arquivosManifesto)
         {
@@ -178,16 +127,16 @@ public sealed class DeployService : IDeployService
             {
                 var manifesto = await LerManifestoAsync(manifestoPath).ConfigureAwait(false);
                 var nomeArquivoCmpkg = CriarNomeArquivoCmpkg(manifesto);
-                var caminhoArquivoCmpkg = _fileSystem.Path.Combine(pasta, nomeArquivoCmpkg);
+                var caminhoArquivoCmpkg = fileSystem.Path.Combine(pasta, nomeArquivoCmpkg);
 
-                if (!_fileSystem.File.Exists(caminhoArquivoCmpkg))
+                if (!fileSystem.File.Exists(caminhoArquivoCmpkg))
                 {
                     // Procurar por qualquer arquivo .cmpkg na pasta
-                    var arquivosCmpkg = _fileSystem.Directory.GetFiles(pasta, "*.cmpkg");
+                    var arquivosCmpkg = fileSystem.Directory.GetFiles(pasta, "*.cmpkg");
 
                     if (arquivosCmpkg.Length == 0)
                     {
-                        _console.MarkupLineInterpolated($"[yellow][[WARN]] Arquivo .cmpkg não encontrado para manifesto {_fileSystem.Path.GetFileName(manifestoPath)}[/]");
+                        console.MarkupLineInterpolated($"[yellow][[WARN]] Arquivo .cmpkg não encontrado para manifesto {fileSystem.Path.GetFileName(manifestoPath)}[/]");
 
                         continue;
                     }
@@ -195,7 +144,7 @@ public sealed class DeployService : IDeployService
                     caminhoArquivoCmpkg = arquivosCmpkg[0];
                 }
 
-                var nomeArquivoS3 = _fileSystem.Path.GetFileName(caminhoArquivoCmpkg);
+                var nomeArquivoS3 = fileSystem.Path.GetFileName(caminhoArquivoCmpkg);
 
                 var arquivo = new DeployArquivo
                 {
@@ -209,7 +158,7 @@ public sealed class DeployService : IDeployService
             }
             catch (Exception ex)
             {
-                _console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao processar manifesto {_fileSystem.Path.GetFileName(manifestoPath)}: {ex.Message}[/]");
+                console.MarkupLineInterpolated($"[red][[ERROR]] Erro ao processar manifesto {fileSystem.Path.GetFileName(manifestoPath)}: {ex.Message}[/]");
             }
         }
 
@@ -223,7 +172,7 @@ public sealed class DeployService : IDeployService
     /// <returns>Dados do manifesto.</returns>
     private async Task<ManifestoDeploy> LerManifestoAsync(string caminhoManifesto)
     {
-        var json = await _fileSystem.File.ReadAllTextAsync(caminhoManifesto).ConfigureAwait(false);
+        var json = await fileSystem.File.ReadAllTextAsync(caminhoManifesto).ConfigureAwait(false);
 
         var dadosCompletos = JsonSerializer.Deserialize<Dictionary<string, object>>(json)
             ?? throw new InvalidOperationException($"Não foi possível deserializar o manifesto: {caminhoManifesto}");
@@ -287,7 +236,7 @@ public sealed class DeployService : IDeployService
 
             if (!simulado && !forcar)
             {
-                var arquivoExiste = await _s3Service.ArquivoExisteAsync(BUCKET_NAME, chaveS3).ConfigureAwait(false);
+                var arquivoExiste = await s3Service.ArquivoExisteAsync(BUCKET_NAME, chaveS3).ConfigureAwait(false);
 
                 if (arquivoExiste)
                 {
@@ -300,14 +249,14 @@ public sealed class DeployService : IDeployService
 
             if (!simulado)
             {
-                arquivo.UrlS3 = await _s3Service.FazerUploadAsync(BUCKET_NAME, chaveS3, arquivo.CaminhoArquivo, arquivo.Manifesto!)
+                arquivo.UrlS3 = await s3Service.FazerUploadAsync(BUCKET_NAME, chaveS3, arquivo.CaminhoArquivo, arquivo.Manifesto!)
                     .ConfigureAwait(false);
 
-                var notificacaoSucesso = await _marketplaceService.NotificarPacoteAsync(urlMarketplace, arquivo.Manifesto!)
+                var notificacaoSucesso = await marketplaceService.NotificarPacoteAsync(urlMarketplace, arquivo.Manifesto!)
                     .ConfigureAwait(false);
 
                 if (!notificacaoSucesso)
-                    _console.MarkupLineInterpolated($"[yellow][[WARN]] Falha ao notificar o marketplace para {arquivo.NomeArquivoS3}[/]");
+                    console.MarkupLineInterpolated($"[yellow][[WARN]] Falha ao notificar o marketplace para {arquivo.NomeArquivoS3}[/]");
             }
             else
             {
