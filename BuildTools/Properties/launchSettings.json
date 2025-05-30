@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "BuildTools": {
+      "commandName": "Project"
+    },
+    "Notificar": {
+      "commandName": "Project",
+      "commandLineArgs": "notificar-market D:\\projetos\\agent\\_build\\pacote --ambiente producao",
+      "workingDirectory": "D:\\projetos\\agent\\_build\\pacote"
+    }
+  }
+}

@@ -128,9 +128,12 @@ public sealed class DeployService
                 var manifesto = await LerManifestoAsync(manifestoPath).ConfigureAwait(false);
                 var nomeArquivoCmpkg = CriarNomeArquivoCmpkg(manifesto);
                 var caminhoArquivoCmpkg = fileSystem.Path.Combine(pasta, nomeArquivoCmpkg);
+                console.MarkupLineInterpolated($"[blue][[INFO]] Procurando arquivo: {nomeArquivoCmpkg}[/]");
 
                 if (!fileSystem.File.Exists(caminhoArquivoCmpkg))
                 {
+                    console.MarkupLineInterpolated($"[yellow][[WARN]] Arquivo .cmpkg não encontrado: {nomeArquivoCmpkg}[/]");
+
                     // Procurar por qualquer arquivo .cmpkg na pasta
                     var arquivosCmpkg = fileSystem.Directory.GetFiles(pasta, "*.cmpkg");
 
@@ -141,7 +144,8 @@ public sealed class DeployService
                         continue;
                     }
 
-                    caminhoArquivoCmpkg = arquivosCmpkg[0];
+                    console.MarkupLineInterpolated($"[blue][[INFO]] Renomeando arquivo {fileSystem.Path.GetFileName(arquivosCmpkg[0])} para {nomeArquivoCmpkg}[/]");
+                    fileSystem.File.Move(arquivosCmpkg[0], caminhoArquivoCmpkg, true);
                 }
 
                 var nomeArquivoS3 = fileSystem.Path.GetFileName(caminhoArquivoCmpkg);
@@ -205,10 +209,11 @@ public sealed class DeployService
     private static string CriarNomeArquivoCmpkg(ManifestoDeploy manifesto)
     {
         var versaoLimpa = manifesto.Versao.Replace(".", "_");
+        var nomeLimpo = manifesto.Nome.ToLowerInvariant();
 
         return !string.IsNullOrEmpty(manifesto.SiglaEmpresa)
-            ? $"{manifesto.SiglaEmpresa}-{manifesto.Nome}_{versaoLimpa}.cmpkg"
-            : $"{manifesto.Nome}_{versaoLimpa}.cmpkg";
+            ? $"{manifesto.SiglaEmpresa.ToLowerInvariant()}-{nomeLimpo}_{versaoLimpa}.cmpkg"
+            : $"{nomeLimpo}_{versaoLimpa}.cmpkg";
     }
 
     /// <summary>

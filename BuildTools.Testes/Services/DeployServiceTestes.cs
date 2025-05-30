@@ -599,7 +599,7 @@ public sealed class DeployServiceTestes
 
         // Assert
         resultado.ArquivosEnviados.ShouldHaveSingleItem();
-        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("EMP-TestePacote_1_0_0.cmpkg");
+        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("emp-testepacote_1_0_0.cmpkg");
     }
 
     [Fact]
@@ -623,7 +623,7 @@ public sealed class DeployServiceTestes
 
         // Assert
         resultado.ArquivosEnviados.ShouldHaveSingleItem();
-        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("TestePacote_1_0_0.cmpkg");
+        resultado.ArquivosEnviados[0].NomeArquivoS3.ShouldBe("testepacote_1_0_0.cmpkg");
     }
 
     [Fact]

@@ -54,10 +54,10 @@ public sealed class AmbienteValidatorTestes
     public void ValidarAmbiente_AmbienteComCaseDiferente_DeveValidar()
     {
         // Arrange
-        const string ambienteUpperCase = "DESENVOLVIMENTO";
+        const string AMBIENTE_UPPER_CASE = "DESENVOLVIMENTO";
 
         // Act
-        var validacao = () => AmbienteValidator.ValidarAmbiente(ambienteUpperCase);
+        var validacao = static () => AmbienteValidator.ValidarAmbiente(AMBIENTE_UPPER_CASE);
 
         // Assert
         validacao.ShouldNotThrow();

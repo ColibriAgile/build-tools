@@ -25,10 +25,10 @@ public sealed class JwtService(IDateTimeProvider dateTimeProvider) : IJwtService
         var chaveOriginal = Encoding.UTF8.GetBytes(CHAVE_LEGADA);
         var chaveBase64 = Convert.ToBase64String(chaveOriginal);
         var chaveBytes = Encoding.UTF8.GetBytes(chaveBase64);
-        
+
         // Fazer padding da chave para 256 bits mínimos
         var chavePadded = FazerPaddingChave(chaveBytes);
-        
+
         var signingKey = new SymmetricSecurityKey(chavePadded);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
