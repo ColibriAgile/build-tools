@@ -1,45 +1,45 @@
-using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
 namespace BuildTools.Services;
 
-using System.Text;
-
 /// <summary>
 /// Implementação do serviço JWT compatível com sistema legado (chave "Colibri@Agile").
 /// </summary>
-public sealed class JwtService : IJwtService
+/// <remarks>
+/// Inicializa uma nova instância da classe <see cref="JwtService"/>.
+/// </remarks>
+/// <param name="dateTimeProvider">Provedor de data e hora.</param>
+public sealed class JwtService(IDateTimeProvider dateTimeProvider) : IJwtService
 {
     private const string TOKEN_FIXO = "93cc0ef1-eb78-4dba-acb8-1949a397ad38";
     private const string CHAVE_LEGADA = "Colibri@Agile";
-
-    private readonly IDateTimeProvider _dateTimeProvider;
-
-    /// <summary>
-    /// Inicializa uma nova instância da classe <see cref="JwtService"/>.
-    /// </summary>
-    /// <param name="dateTimeProvider">Provedor de data e hora.</param>
-    public JwtService(IDateTimeProvider dateTimeProvider)
-        => _dateTimeProvider = dateTimeProvider;
+    private const int TAMANHO_CHAVE_MINIMO = 32; // 256 bits
 
     /// <inheritdoc />
     public string GerarToken()
     {
+        // Aplicar Base64 encoding como no Java original
         var chaveOriginal = Encoding.UTF8.GetBytes(CHAVE_LEGADA);
-        var chavePadded = PadKeyTo256Bits(chaveOriginal);
-
+        var chaveBase64 = Convert.ToBase64String(chaveOriginal);
+        var chaveBytes = Encoding.UTF8.GetBytes(chaveBase64);
+        
+        // Fazer padding da chave para 256 bits mínimos
+        var chavePadded = FazerPaddingChave(chaveBytes);
+        
         var signingKey = new SymmetricSecurityKey(chavePadded);
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
-        var agora = _dateTimeProvider.UtcNow;
+        var agora = dateTimeProvider.UtcNow;
         var expiracao = agora.AddMinutes(15);
 
+        // Usar apenas os claims necessários, como no Java
         var claims = new[]
         {
-            new Claim("sub", TOKEN_FIXO),
-            new Claim("iat", new DateTimeOffset(agora).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new Claim("exp", new DateTimeOffset(expiracao).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            new Claim(JwtRegisteredClaimNames.Jti, TOKEN_FIXO),
+            new Claim(JwtRegisteredClaimNames.Exp, new DateTimeOffset(expiracao).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
 
         var token = new JwtSecurityToken
@@ -47,7 +47,7 @@ public sealed class JwtService : IJwtService
             issuer: null,
             audience: null,
             claims: claims,
-            notBefore: agora,
+            notBefore: null,
             expires: expiracao,
             signingCredentials: credentials
         );
@@ -56,22 +56,18 @@ public sealed class JwtService : IJwtService
     }
 
     /// <summary>
-    /// Completa a chave para 256 bits para compatibilidade com o HMAC SHA-256.
+    /// Faz o padding da chave para o tamanho mínimo necessário (256 bits).
     /// </summary>
-    /// <param name="key">
-    /// A chave original em bytes.
-    /// </param>
-    /// <returns>
-    /// A chave preenchida para 256 bits como um array de bytes.
-    /// </returns>
-    private static byte[] PadKeyTo256Bits(byte[] key)
+    /// <param name="chaveOriginal">Chave original em bytes.</param>
+    /// <returns>Chave com padding aplicado.</returns>
+    private static byte[] FazerPaddingChave(byte[] chaveOriginal)
     {
-        if (key.Length >= 32)
-            return key;
+        if (chaveOriginal.Length >= TAMANHO_CHAVE_MINIMO)
+            return chaveOriginal;
 
-        var padded = new byte[32];
-        Buffer.BlockCopy(key, 0, padded, 0, key.Length);
+        var chavePadded = new byte[TAMANHO_CHAVE_MINIMO];
+        Array.Copy(chaveOriginal, chavePadded, chaveOriginal.Length);
 
-        return padded;
+        return chavePadded;
     }
 }
